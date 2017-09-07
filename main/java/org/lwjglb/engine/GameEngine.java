@@ -51,11 +51,11 @@ public class GameEngine implements Runnable {
     protected void gameLoop() {
         boolean running = true;
         while (running && !window.windowShouldClose()) {
-//            float elapsedTime = timer.getElapsedTime();
+            float elapsedTime = timer.getElapsedTime();
 
             input();
 
-            update(.01f); // TODO base on last frame time
+            update(elapsedTime);
 
             render();
         }
