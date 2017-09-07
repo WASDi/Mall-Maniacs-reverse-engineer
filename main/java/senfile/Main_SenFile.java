@@ -1,0 +1,169 @@
+package senfile;
+
+import senfile.factories.SenFileFactory;
+import senfile.parts.elements.SuboElement;
+import senfile.parts.mesh.Mesh;
+import senfile.statistics.GroupedContentsDumper;
+import senfile.statistics.ValueOfInterestGetter;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Random;
+
+public class Main_SenFile {
+
+    private static ValueOfInterestGetter valueOfInterest = setupValueOfInterest();
+
+    private static final boolean VERBOSE_DUMP = !true;
+
+    public static void main(String[] args) throws Exception {
+        long startTime = System.nanoTime();
+
+//        dumpOne();
+        dumpMany();
+
+//        renderMesh("_1VONKEL");
+//        renderMesh("FLOTTY");
+//        renderMesh("BRITTA");
+//        renderMesh("BERRY");
+//        renderMesh("AFTONBLADET");
+
+//        renderRandomMesh();
+
+        long endTime = System.nanoTime();
+        System.out.printf("\nCompleted in %.0fms\n", (endTime - startTime) / 1e6);
+    }
+
+    private static ValueOfInterestGetter setupValueOfInterest() {
+        return new ValueOfInterestGetter(
+                m -> null,
+                c -> null,
+                o -> null,
+                mapi -> null,
+                subo -> null,
+//                subo -> String.format("%02X %02X %02X %02X",
+//                                      subo.rawBytes[4],
+//                                      subo.rawBytes[5],
+//                                      subo.rawBytes[6],
+//                                      subo.rawBytes[7]),
+                obji -> (obji.zRight & 0xFF00) >> 8
+        );
+    }
+
+    private static void dumpOne() throws IOException {
+        String filePath = "/home/wasd/Downloads/Mall Maniacs/scene_ica/OBJECTS.SEN";
+//        filePath = "/home/wasd/Downloads/Mall Maniacs/menu/CHARACTERS.SEN";
+        filePath = "/home/wasd/Downloads/Mall Maniacs/scene_ica/MALL1_ICA.SEN";
+//        filePath = "/home/wasd/Downloads/Mall Maniacs/scene_aqua/AQUAMALL.SEN";
+
+        List<SenFile> senFiles = getSingleSenFile(filePath);
+        dump(senFiles);
+    }
+
+    private static void renderRandomMesh() throws IOException {
+        List<SenFile> senFiles = getAllSenFiles();
+        Random r = new Random();
+        SenFile senFile = senFiles.get(r.nextInt(senFiles.size()));
+        List<Mesh> meshes = senFile.getMeshes();
+        Mesh mesh = meshes.get(r.nextInt(meshes.size()));
+
+        System.out.println("Rendering mesh: " + mesh.name + " from " + senFile.getTitle());
+        RenderMesh.render(mesh, true);
+    }
+
+    private static void renderMesh(String nameToFind) throws IOException {
+
+//        List<SenFile> senFiles = getAllSenFiles();
+        List<SenFile> senFiles = getSingleSenFile("/home/wasd/Downloads/Mall Maniacs/scene_aqua/OBJECTS.SEN");
+
+        Optional<Mesh> meshOptional = senFiles
+                .stream()
+                .flatMap(senFile -> senFile.getMeshes().stream())
+                .filter(mesh -> mesh.name.equals(nameToFind))
+                .findAny();
+
+        if (!meshOptional.isPresent()) {
+            throw new IllegalArgumentException("Mesh " + nameToFind + " not found");
+        }
+        Mesh mesh = meshOptional.get();
+
+//        System.out.println("Vertex[] vertices = {");
+//        for (Vertex vertex : mesh.getVertices()) {
+//            System.out.print(vertex.toCodeString());
+//            System.out.println(",");
+//        }
+//        System.out.println("};");
+
+        SenFile firstSenFile = senFiles.get(0);
+//        firstSenFile.getMeshes().forEach(m -> System.out.println(m.name));
+        SuboElement suboElement = firstSenFile.getSubo().elements.get(0);
+
+//        for (SuboElement.FaceInfo faceInfo : suboElement.faceInfos) {
+//            byte[] vi = faceInfo.vertexIndices;
+//            System.out.printf("%d, %d, %d, %d,\n", vi[0], vi[1], vi[2], vi[3]);
+//        }
+
+//        for (SuboElement.FaceInfo faceInfo : suboElement.faceInfos) {
+//            short mapiIndex = faceInfo.restShorts[1];
+//            System.out.printf("%d, ", mapiIndex);
+//        }
+
+//        for (int i = 0; i < 5; i++) {
+//            MapiElement element = firstSenFile.getMapi().elements[i];
+//            byte[] b = element.textureCoordBytes;
+//            System.out.printf("%d, %d, %d, %d, %d, %d, %d, %d,\n",
+//                              b[0] & 0xFF,
+//                              b[1] & 0xFF,
+//                              b[2] & 0xFF,
+//                              b[3] & 0xFF,
+//                              b[4] & 0xFF,
+//                              b[5] & 0xFF,
+//                              b[6] & 0xFF,
+//                              b[7] & 0xFF);
+//        }
+
+        RenderMesh.render(mesh, true);
+    }
+
+    private static void dumpMany() throws IOException {
+        List<SenFile> senFiles = getAllSenFiles();
+
+        dump(senFiles);
+//        for (SenFile senFile : senFiles) {
+////            if (senFile.getMeshes().size() != senFile.getObji().elements.length) {
+////                System.out.println(senFile.getTitle() + " --- " + senFile.getMeshes().size() + " --- " + senFile.getObji().elements.length);
+////            }
+//            System.out.println(senFile.getTitle() + " --- " + senFile.getMeshes().size() + " --- " + senFile.getSubo().elements.length);
+//        }
+    }
+
+    private static List<SenFile> getAllSenFiles() throws IOException {
+        List<String> senFilePaths = Util.pathToAllSenFilesInDirectory("/home/wasd/Downloads/Mall Maniacs/");
+        List<SenFile> senFiles = new ArrayList<>(senFilePaths.size());
+        for (String senFilePath : senFilePaths) {
+            SenFile senFile = SenFileFactory.fromFile(senFilePath);
+            senFiles.add(senFile);
+        }
+        return senFiles;
+    }
+
+    private static List<SenFile> getSingleSenFile(String filePath) throws IOException {
+        List<SenFile> senFiles = new ArrayList<>();
+        SenFile senFile = SenFileFactory.fromFile(filePath);
+        senFiles.add(senFile);
+
+        senFile.dumpInfo();
+        return senFiles;
+    }
+
+    private static void dump(List<SenFile> senFiles) {
+        if (VERBOSE_DUMP) {
+            GroupedContentsDumper.dumpVerbose(senFiles, valueOfInterest);
+        } else {
+            GroupedContentsDumper.dump(senFiles, valueOfInterest);
+        }
+    }
+
+}

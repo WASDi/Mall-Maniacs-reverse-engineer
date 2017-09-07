@@ -1,0 +1,13 @@
+Quad texturing
+
+https://www.gamedev.net/resources/_/technical/opengl/opengl-texture-mapping-an-introduction-r947
+http://nehe.gamedev.net/tutorial/texture_mapping/12038/#E0GNbaDtJz4
+
+https://greysundiaries.wordpress.com/2011/03/13/texture-atlases-in-a-blog-post/
+http://www.geeks3d.com/20130514/opengl-interpolation-qualifiers-glsl-tutorial/
+
+texture map
+texture atlas
+uv mapping!
+
+http://www.opengl-tutorial.org/beginners-tutorials/tutorial-5-a-textured-cube/
