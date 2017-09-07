@@ -1,0 +1,81 @@
+GÖR ETT PROGRAM SOM...
+
+Laddar en SEN-fil
+Läser av varje MESH och deras NAME
+För varje 4byte-slot, ha en Map, från uppkomna värden till lista på NAME som fanns där
+
+t.ex (kollisonstyp?)
+0x8A: MCDONALDS
+0x42: WALL1, WALL2 etc.
+
+-----
+
+Little endian
+
+Header:
+4 bytes: "REV2"
+4 bytes: antal bytes till filslut (=total-8)
+
+Array av Mesh:
+4 bytes: "MESH"
+4 bytes: antal resterande bytes för denna mesh fram till namnet
+	4 bytes: okänt värde, 1 på allt?
+	4 bytes: okänt värde, 1 på allt?
+	4 bytes: okänt värde,	0xF (characters+question), 0 (objects+pokal+MALL)
+	4 bytes: okänt värde, 0x34 på allt?
+  4 bytes: okänt värde, 0xAC (characters+question), 0x34 (objects+pokal+MALL)
+  4 bytes: okänt värde, 0xE8 (characters+question), 0x34 (objects+pokal+MALL)
+  4 bytes: okänt värde, spridda gemensamma. Värden upp till 20k men oftast 200-2000
+  12 bytes: okänt värde, 0 på allt?
+  4 bytes: okänt värde, 0x64 (objects), 0x12_40_64_01 (MALL), 0x18_01 (characters+question)
+  4 bytes: okänt värde, 0x80_96_98_00 = 10,000,000 på objects, annat på character
+  4 bytes: kollisionstyp? 0x04-0x0E (objects), till 0x50 (MALL, hyllor+vägg+golv), 0x8A (MCDONALS), 0x50-0x7A (characters), 0x3F (kassoerska), 0x36 (MCDMAN), 0x18 (GREEN/REDCART), 0x1D (pokal)
+  4 bytes: okänt värde, 0x64 (MALL+objects+pokal), 0x18_01 (characters+question)
+  4 bytes: okänt värde, 0 på allt?
+  4 bytes: TPG-index? spridda gemensamma värden, 900-1200 (characters, mcdman+kassa=700), 140-200 (objects) mod 4
+  4 bytes: okänt värde, 1-2 på allt? (UU)
+  4 bytes: TPG-index?, 140-200 (objects, mod 4)
+  4 bytes: okänt värde, 1 på de med 2 (UU)? kan vara 0 (objects)
+  ... (variabelt antal)
+  8 bytes: 0 på allt? (objects)
+  4 bytes: Antal kommande bytes (+100?) till array av verticies (objects och MALL, INTE character!?)
+		8 bytes: format (XX, YY, ZZ) plus padding (FF)
+	... (variablet antal, 16-132)
+4 bytes: "NAME"
+4 bytes: namnets längd 
+	_ bytes: namnet
+
+COLS ???
+4 bytes: "COLS"
+4 bytes: antal resterande bytes
+	_ bytes: ???
+
+MAPI ???
+4 bytes: "MAPI"
+4 bytes: antal resterande bytes
+  4 bytes: 0 på allt (objects)
+  1 byte: 0x64 på allt (objects)
+  1 byte: 0 på allt (objects)
+  9 bytes: ???
+
+SUBO ???
+4 bytes: "SUBO"
+4 bytes: antal resterande bytes
+	_ bytes: ???
+
+TNAM = Namn på TPG-filer
+4 bytes: "TNAM"
+4 bytes: antal resterande bytes
+	_ bytes: Flera NUL-terminerade filnamn
+
+(aquamall/future: "TANI"...)
+
+OBJI???
+4 bytes: "OBJI"
+4 bytes: antal resterande bytes
+	_ bytes: ???
+
+ONAM = Lista över namn på alla Mesh
+4 bytes: "ONAM"
+4 bytes: antal resterande bytes
+	_ bytes: Flera NUL-terminerade namn (dubletter? FRUKT1 i FUTUREMALL)

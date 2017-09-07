@@ -1,0 +1,140 @@
+package senfile.factories;
+
+import senfile.SenFile;
+import senfile.HeaderTexts;
+import senfile.parts.Cols;
+import senfile.parts.Mapi;
+import senfile.parts.elements.ObjiElement;
+import senfile.parts.mesh.Mesh;
+import senfile.parts.Obji;
+import senfile.parts.Onam;
+import senfile.parts.Subo;
+import senfile.parts.Tani;
+import senfile.parts.Tnam;
+
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.channels.FileChannel;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+public class SenFileFactory {
+
+    public static SenFile fromFile(String filePath) {
+        int slashIndex = filePath.lastIndexOf('/');
+        String title = slashIndex == -1 ? filePath : filePath.substring(slashIndex + 1);
+        try {
+            return fromFile(filePath, title);
+        } catch (Exception ex) {
+            System.err.println("ERROR FOR " + filePath);
+            ex.printStackTrace();
+            throw new IllegalArgumentException("snopp");
+        }
+    }
+
+    public static SenFile fromFile(String filePath, String title) throws IOException {
+        RandomAccessFile aFile = new RandomAccessFile(filePath, "r");
+        FileChannel inChannel = aFile.getChannel();
+        long fileSize = inChannel.size();
+        ByteBuffer buffer = ByteBuffer.allocate((int) fileSize);
+        inChannel.read(buffer);
+        buffer.flip();
+        buffer.order(ByteOrder.LITTLE_ENDIAN);
+
+        SenFile senFile = parseSenFile(title, buffer);
+
+        inChannel.close();
+        aFile.close();
+
+        return senFile;
+    }
+
+    public static SenFile parseSenFile(String title, ByteBuffer buffer) {
+        int rev2Header = buffer.getInt();// REV2-header
+        if (rev2Header != HeaderTexts.REV2) {
+            throw new IllegalArgumentException("Expected REV2 header but found " + rev2Header);
+        }
+        int totalBytesLeft = buffer.getInt();
+
+        List<Mesh> meshes = new ArrayList<>();
+        Cols cols = null;
+        Mapi mapi = null;
+        Subo subo = null;
+        Tnam tnam = null;
+        Tani tani = null;
+        Obji obji = null;
+        Onam onam = null;
+
+        while (buffer.hasRemaining()) {
+            int header = buffer.getInt();
+            if (header == HeaderTexts.MESH) {
+                Mesh mesh = MeshFactory.parseFromBufferPosition(buffer);
+                meshes.add(mesh);
+            } else if (header == HeaderTexts.COLS) {
+                if (cols != null) {
+                    throw new IllegalArgumentException("Multiple COLS?");
+                }
+                cols = ColsFactory.parseFromBufferPosition(buffer);
+            } else if (header == HeaderTexts.MAPI) {
+                if (mapi != null) {
+                    throw new IllegalArgumentException("Multiple MAPI?");
+                }
+                mapi = MapiFactory.parseFromBufferPosition(buffer);
+            } else if (header == HeaderTexts.SUBO) {
+                if (subo != null) {
+                    throw new IllegalArgumentException("Multiple SUBO?");
+                }
+                subo = SuboFactory.parseFromBufferPosition(buffer);
+            } else if (header == HeaderTexts.TNAM) {
+                if (tnam != null) {
+                    throw new IllegalArgumentException("Multiple TNAM?");
+                }
+                tnam = TnamFactory.parseFromBufferPosition(buffer);
+            } else if (header == HeaderTexts.TANI) {
+                if (tani != null) {
+                    throw new IllegalArgumentException("Multiple TANI?");
+                }
+                tani = TaniFactory.parseFromBufferPosition(buffer);
+            } else if (header == HeaderTexts.OBJI) {
+                if (obji != null) {
+                    throw new IllegalArgumentException("Multiple OBJI?");
+                }
+                obji = ObjiFactory.parseFromBufferPosition(buffer);
+            } else if (header == HeaderTexts.ONAM) {
+                if (onam != null) {
+                    throw new IllegalArgumentException("Multiple ONAM?");
+                }
+                onam = OnamFactory.parseFromBufferPosition(buffer);
+            } else {
+                System.out.println("(" + title + ") Unknown header " + header + " before position " + buffer.position() + ", aborting.");
+                break;
+            }
+        }
+
+        setMeshNamesForObji(meshes, obji);
+
+        return new SenFile(title, meshes, mapi, subo, obji);
+    }
+
+    private static void setMeshNamesForObji(List<Mesh> meshes, Obji obji) {
+        if (meshes.size() != obji.elements.length) {
+            System.out.printf("Not same amount of meshes as obji! %d and %d\n", meshes.size(), obji.elements.length);
+            for (ObjiElement element : obji.elements) {
+                element.setNameOfMesh("_NO_LINK");
+            }
+            return;
+        }
+
+        for (int i = 0; i < meshes.size(); i++) {
+            Mesh mesh = meshes.get(i);
+            ObjiElement objiElement = obji.elements[i];
+
+            objiElement.setNameOfMesh(mesh.name);
+        }
+    }
+
+}
