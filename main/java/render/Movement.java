@@ -2,7 +2,6 @@ package render;
 
 import static org.lwjgl.glfw.GLFW.*;
 
-// TODO https://lwjglgamedev.gitbooks.io/3d-game-development-with-lwjgl/content/chapter8/chapter8.html
 public class Movement {
 
     private float x;

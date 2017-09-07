@@ -2,10 +2,6 @@ package org.lwjglb.engine;
 
 public class GameEngine implements Runnable {
 
-    public static final int TARGET_FPS = 60;
-
-    public static final float LOOP_SLOT = 1f / TARGET_FPS;
-
     private final Window window;
 
     private final Thread gameLoopThread;
@@ -16,9 +12,9 @@ public class GameEngine implements Runnable {
 
     private final MouseInput mouseInput;
 
-    public GameEngine(String windowTitle, int width, int height, boolean vSync, IGameLogic gameLogic) throws Exception {
+    public GameEngine(String windowTitle, int width, int height, IGameLogic gameLogic) throws Exception {
         gameLoopThread = new Thread(this, "GAME_LOOP_THREAD");
-        window = new Window(windowTitle, width, height, vSync);
+        window = new Window(windowTitle, width, height);
         mouseInput = new MouseInput();
         this.gameLogic = gameLogic;
         timer = new Timer();
@@ -59,28 +55,14 @@ public class GameEngine implements Runnable {
 
             input();
 
-            update(LOOP_SLOT);
+            update(.01f); // TODO base on last frame time
 
             render();
-
-            if (!window.isvSync()) {
-                sync();
-            }
         }
     }
 
     protected void cleanup() {
         gameLogic.cleanup();
-    }
-
-    private void sync() {
-        double endTime = timer.getLastLoopTime() + LOOP_SLOT;
-        while (timer.getTime() < endTime) {
-            try {
-                Thread.sleep(1);
-            } catch (InterruptedException ie) {
-            }
-        }
     }
 
     protected void input() {
