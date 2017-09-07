@@ -2,7 +2,10 @@ package org.lwjglb.engine.graph;
 
 import de.matthiasmann.twl.utils.PNGDecoder;
 import de.matthiasmann.twl.utils.PNGDecoder.Format;
+
+import java.io.IOException;
 import java.nio.ByteBuffer;
+
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL30.glGenerateMipmap;
 
@@ -10,7 +13,7 @@ public class Texture {
 
     private final int id;
 
-    public Texture(String fileName) throws Exception {
+    public Texture(String fileName) throws IOException {
         this(loadTexture(fileName));
     }
 
@@ -26,7 +29,7 @@ public class Texture {
         return id;
     }
 
-    private static int loadTexture(String fileName) throws Exception {
+    private static int loadTexture(String fileName) throws IOException {
         // Load Texture file
         PNGDecoder decoder = new PNGDecoder(Texture.class.getResourceAsStream(fileName));
 
