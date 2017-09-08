@@ -49,7 +49,7 @@ public class SenFileRenderer {
     private int[] texture_MERGED = new int[NUM_MERGED_TPG_FILES];
 
     private final SenFile senFile;
-    private int meshIdx = 0;
+    private int meshIdx = 45;
 
     private final Movement movement = new Movement();
 
@@ -218,7 +218,7 @@ public class SenFileRenderer {
     private void loop() {
         GL.createCapabilities();
 
-        initMyRandomTexture();
+//        initMyRandomTexture();
         for (int i = 0; i < NUM_MERGED_TPG_FILES; i++) {
             initMergedTpgTexture(i);
         }
