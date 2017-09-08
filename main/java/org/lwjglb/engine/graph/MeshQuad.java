@@ -1,17 +1,20 @@
 package org.lwjglb.engine.graph;
 
+import org.lwjgl.system.MemoryUtil;
+
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.List;
+
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL13.*;
+import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
+import static org.lwjgl.opengl.GL13.glActiveTexture;
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.*;
-import org.lwjgl.system.MemoryUtil;
 
-public class Mesh {
+public class MeshQuad implements IMesh {
 
     private final int vaoId;
 
@@ -21,14 +24,14 @@ public class Mesh {
 
     private final Texture texture;
 
-    public Mesh(float[] positions, float[] textCoords, int[] indices, Texture texture) {
+    public MeshQuad(float[] positions, float[] textCoords, int[] indices, Texture texture) {
         FloatBuffer posBuffer = null;
         FloatBuffer textCoordsBuffer = null;
         IntBuffer indicesBuffer = null;
         try {
             this.texture = texture;
             vertexCount = indices.length;
-            vboIdList = new ArrayList();
+            vboIdList = new ArrayList<>();
 
             vaoId = glGenVertexArrays();
             glBindVertexArray(vaoId);
@@ -93,7 +96,7 @@ public class Mesh {
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);
 
-        glDrawElements(GL_TRIANGLES, getVertexCount(), GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_QUADS, getVertexCount(), GL_UNSIGNED_INT, 0);
 
         // Restore state
         glDisableVertexAttribArray(0);

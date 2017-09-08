@@ -7,6 +7,11 @@ import org.lwjglb.engine.IGameLogic;
 import org.lwjglb.engine.MouseInput;
 import org.lwjglb.engine.Window;
 import org.lwjglb.engine.graph.Camera;
+import org.lwjglb.engine.graph.IMesh;
+import render.LwjglMeshCreator;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.lwjgl.glfw.GLFW.*;
 
@@ -20,7 +25,7 @@ public class DummyGame implements IGameLogic {
 
     private final Camera camera;
 
-    private GameItem[] gameItems;
+    private List<GameItem> gameItems = new ArrayList<>();
 
     private static final float CAMERA_POS_STEP = 0.05f;
 
@@ -33,19 +38,46 @@ public class DummyGame implements IGameLogic {
     @Override
     public void init(Window window) throws Exception {
         renderer.init(window);
-        GameItem gameItem1 = new GameItem(Cube.MESH);
-        gameItem1.setScale(0.5f);
-        gameItem1.setPosition(0, 0, -2);
-        GameItem gameItem2 = new GameItem(Cube.MESH);
-        gameItem2.setScale(0.5f);
-        gameItem2.setPosition(0.5f, 0.5f, -2);
-        GameItem gameItem3 = new GameItem(Cube.MESH);
-        gameItem3.setScale(0.5f);
-        gameItem3.setPosition(0, 0, -2.5f);
-        GameItem gameItem4 = new GameItem(Cube.MESH);
-        gameItem4.setScale(0.5f);
-        gameItem4.setPosition(0.5f, 0, -2.5f);
-        gameItems = new GameItem[]{gameItem1, gameItem2, gameItem3, gameItem4};
+//        addCube(0, 0, -2);
+//        addCube(0.5f, 0.5f, -2);
+//        addCube(0, 0, -2.5f);
+//        addCube(0.5f, 0, -2.5f);
+
+
+//        GL11.glEnable(GL11.GL_CULL_FACE);
+
+        addCube(0, 0, -2, TriCube.MESH);
+
+        addCube(0, 0, -1, QuadCube.MY_MESH);
+        addCube(0, -1, -1, TriCube.MY_MESH);
+
+        addCube(0, 0, 1, TriCube.MESH);
+
+        addCube(-1, 0, 0, TriCube.MESH);
+        addCube(0, 1, 0, TriCube.MESH);
+        addCube(1, 0, 0, TriCube.MESH);
+        addCube(2, 0, 0, TriCube.MESH);
+
+        meshFromTranslatedSen();
+    }
+
+    private void meshFromNaiveSen() {
+        GameItem item = new GameItem(new NaiveSenfileMesh(45));
+        item.setPosition(2, 1, 0);
+        gameItems.add(item);
+    }
+
+    private void meshFromTranslatedSen() {
+        GameItem item = new GameItem(LwjglMeshCreator.makeMeAMesh(44));
+        item.setPosition(2, 1, 0);
+        gameItems.add(item);
+    }
+
+    private void addCube(float x, float y, float z, IMesh mesh) {
+        GameItem item = new GameItem(mesh);
+        item.setScale(0.5f);
+        item.setPosition(x, y, z);
+        gameItems.add(item);
     }
 
     @Override

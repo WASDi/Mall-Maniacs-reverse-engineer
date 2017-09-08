@@ -1,13 +1,16 @@
 package org.lwjglb.game;
 
 import org.joml.Matrix4f;
-import static org.lwjgl.opengl.GL11.*;
 import org.lwjglb.engine.GameItem;
 import org.lwjglb.engine.Utils;
 import org.lwjglb.engine.Window;
 import org.lwjglb.engine.graph.Camera;
 import org.lwjglb.engine.graph.ShaderProgram;
 import org.lwjglb.engine.graph.Transformation;
+
+import java.util.List;
+
+import static org.lwjgl.opengl.GL11.*;
 
 public class Renderer {
 
@@ -45,7 +48,7 @@ public class Renderer {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 
-    public void render(Window window, Camera camera, GameItem[] gameItems) {
+    public void render(Window window, Camera camera, List<GameItem> gameItems) {
         clear();
         
         if ( window.isResized() ) {
