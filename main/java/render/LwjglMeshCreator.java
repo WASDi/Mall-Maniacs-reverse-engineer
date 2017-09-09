@@ -16,11 +16,10 @@ import java.util.List;
 
 public class LwjglMeshCreator {
 
-    private static final float SCALE = 1 / 1000f;
+    private static final float SCALE = 1 / 3000f;
 
     public static MeshTri makeMeAMesh(int meshIdx) {
-        SenFile senFile = SenFileFactory.fromFile("/home/wasd/Downloads/Mall Maniacs/scene_ica/MALL1_ICA.SEN");
-
+        SenFile senFile = SenFileFactory.icaSingleton();
 
         Mesh mesh = senFile.getMeshes().get(meshIdx);
         int[] suboOffsets = mesh.getSuboOffsets();
@@ -82,7 +81,7 @@ public class LwjglMeshCreator {
         private int indexOffset = 0;
 
         void putVertex(Vertex vertex, float textureX, float textureY) {
-            vertexFloats.add(vertex.x * SCALE);
+            vertexFloats.add(vertex.x * -SCALE);
             vertexFloats.add(vertex.y * -SCALE);
             vertexFloats.add(vertex.z * SCALE);
             textureFloats.add(textureX);

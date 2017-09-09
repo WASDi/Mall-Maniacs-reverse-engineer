@@ -1,16 +1,16 @@
 package senfile.factories;
 
-import senfile.SenFile;
 import senfile.HeaderTexts;
+import senfile.SenFile;
 import senfile.parts.Cols;
 import senfile.parts.Mapi;
-import senfile.parts.elements.ObjiElement;
-import senfile.parts.mesh.Mesh;
 import senfile.parts.Obji;
 import senfile.parts.Onam;
 import senfile.parts.Subo;
 import senfile.parts.Tani;
 import senfile.parts.Tnam;
+import senfile.parts.elements.ObjiElement;
+import senfile.parts.mesh.Mesh;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -18,11 +18,18 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public class SenFileFactory {
+
+    private static SenFile icaSingleton;
+
+    public static SenFile icaSingleton() {
+        if (icaSingleton == null) {
+            icaSingleton = fromFile("/home/wasd/Downloads/Mall Maniacs/scene_ica/MALL1_ICA.SEN");
+        }
+        return icaSingleton;
+    }
 
     public static SenFile fromFile(String filePath) {
         int slashIndex = filePath.lastIndexOf('/');
