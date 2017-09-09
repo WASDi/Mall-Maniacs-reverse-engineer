@@ -6,6 +6,7 @@ import java.nio.ByteBuffer;
 public class TpgImage {
 
     public static final int SIZE = 256;
+    public static final int BUFFERED_IMAGE_TYPE = BufferedImage.TYPE_INT_RGB;
     private static final int PALETTE_START = 256 * 256;
 
     private final byte[] bytes;
@@ -17,7 +18,7 @@ public class TpgImage {
 
     public BufferedImage renderLazy() {
         if (cachedImage == null) {
-            cachedImage = new BufferedImage(SIZE, 256, BufferedImage.TYPE_INT_RGB);
+            cachedImage = new BufferedImage(SIZE, 256, BUFFERED_IMAGE_TYPE);
             for (int y = 0; y < SIZE; y++) {
                 for (int x = 0; x < SIZE; x++) {
                     int rgb = getRgb(x, y);

@@ -1,5 +1,6 @@
-package render;
+package render.texture;
 
+import org.lwjglb.engine.graph.Texture;
 import tpgviewer.tpg.TpgImage;
 import tpgviewer.tpg.TpgImageFactory;
 
@@ -7,14 +8,20 @@ import java.nio.ByteBuffer;
 
 import static org.lwjgl.opengl.GL11.*;
 
+@Deprecated
 public class MergedTpgTextureRepo {
 
     private static final int NUM_MERGED_TPG_FILES = 32;
-    private int[] texture_MERGED = new int[NUM_MERGED_TPG_FILES];
+    private static final boolean throwBecauseDeprecated = true;
+
+    private Texture[] textures = new Texture[NUM_MERGED_TPG_FILES];
 
     public static final MergedTpgTextureRepo REPO = new MergedTpgTextureRepo();
 
-    public MergedTpgTextureRepo() {
+    private MergedTpgTextureRepo() {
+        if (throwBecauseDeprecated) {
+            throw new UnsupportedOperationException("use TextureAtlas");
+        }
         for (int i = 0; i < NUM_MERGED_TPG_FILES; i++) {
             initMergedTpgTexture(i);
         }
@@ -25,9 +32,10 @@ public class MergedTpgTextureRepo {
         TpgImage tpgImage = TpgImageFactory.fromFile(filePath);
         ByteBuffer pixels = tpgImage.toByteBuffer();
 
-        texture_MERGED[idx] = glGenTextures();
+        int textureHandle = glGenTextures();
+        textures[idx] = new Texture(textureHandle);
 
-        glBindTexture(GL_TEXTURE_2D, texture_MERGED[idx]);
+        glBindTexture(GL_TEXTURE_2D, textureHandle);
 
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
@@ -41,8 +49,8 @@ public class MergedTpgTextureRepo {
                      GL_RGB, GL_UNSIGNED_BYTE, pixels);
     }
 
-    public int textureGlIdForMergedId(int mergedId) {
-        return texture_MERGED[mergedId];
+    public Texture textureForMergedId(int mergedId) {
+        return textures[mergedId];
     }
 
 }

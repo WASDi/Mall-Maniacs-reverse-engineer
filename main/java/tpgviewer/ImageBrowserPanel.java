@@ -29,7 +29,7 @@ public class ImageBrowserPanel extends JPanel implements KeyListener {
 
     public void loadBytes() {
         String filePath = String.format("/home/wasd/Downloads/Mall Maniacs/scene_ica/MERGED%02d.TPG", imgIndex);
-        filePath = String.format("/home/wasd/Downloads/Mall Maniacs/scene_aqua/MERGED%02d.TPG", imgIndex);
+//        filePath = String.format("/home/wasd/Downloads/Mall Maniacs/scene_aqua/MERGED%02d.TPG", imgIndex);
 //        filePath = String.format("/home/wasd/Downloads/Mall Maniacs/scene_future/FUT%02d.TPG", imgIndex);
 //        String filePath = "/home/wasd/Downloads/Mall Maniacs/menu/SUSANNE00.TPG";
         try {

@@ -2,14 +2,17 @@ package render;
 
 import org.lwjglb.engine.graph.MeshTri;
 import org.lwjglb.engine.graph.Texture;
+import render.texture.TextureAtlas;
+import render.util.Utils;
 import senfile.SenFile;
 import senfile.factories.SenFileFactory;
 import senfile.parts.elements.MapiElement;
 import senfile.parts.elements.SuboElement;
+import senfile.parts.mesh.Mesh;
 import senfile.parts.mesh.Vertex;
 
-import java.io.IOException;
-import java.util.Random;
+import java.util.ArrayList;
+import java.util.List;
 
 public class LwjglMeshCreator {
 
@@ -18,76 +21,97 @@ public class LwjglMeshCreator {
     public static MeshTri makeMeAMesh(int meshIdx) {
         SenFile senFile = SenFileFactory.fromFile("/home/wasd/Downloads/Mall Maniacs/scene_ica/MALL1_ICA.SEN");
 
-        senfile.parts.mesh.Mesh mesh = senFile.getMeshes().get(meshIdx);
+
+        Mesh mesh = senFile.getMeshes().get(meshIdx);
+        int[] suboOffsets = mesh.getSuboOffsets();
         Vertex[] vertices = mesh.getVertices();
 
-        float[] positions = new float[vertices.length * 3]; // alla vertexars xyz
-        float[] textCoords = new float[vertices.length * 2]; // alla vertexars texturkoordinater
+        MeshBuilderFromQuad meshBuilderFromQuad = new MeshBuilderFromQuad();
 
-        for (int i = 0; i < vertices.length; i++) {
-            Vertex vertex = vertices[i];
-            int offset = i * 3;
-            positions[offset] = vertex.x * SCALE;
-            positions[offset + 1] = vertex.y * -SCALE; // invert y
-            positions[offset + 2] = vertex.z * SCALE;
+        for (int suboOffset : suboOffsets) {
+            SuboElement.FaceInfo[] faceInfos = senFile.getSubo().elementByOffset(suboOffset).faceInfos;
+
+            for (SuboElement.FaceInfo faceInfo : faceInfos) {
+                byte[] vertexIndices = faceInfo.vertexIndices;
+                int v0 = vertexIndices[0] & 0xFF;
+                int v1 = vertexIndices[1] & 0xFF;
+                int v2 = vertexIndices[2] & 0xFF;
+                int v3 = vertexIndices[3] & 0xFF;
+
+                int textureIndexForFace = faceInfo.getMapiIndex();
+                MapiElement mapiElement = senFile.getMapi().elements[textureIndexForFace];
+                int mergedTpgFileIndex = mapiElement.mergedTpgFileIndex;
+                byte[] coords = mapiElement.textureCoordBytes;
+
+
+                float xOffset = TextureAtlas.xOffsetFromIndex(mergedTpgFileIndex);
+                float yOffset = TextureAtlas.yOffsetFromIndex(mergedTpgFileIndex);
+                float divX = 256f * TextureAtlas.SIZE_X;
+                float divY = 256f * TextureAtlas.SIZE_Y;
+
+                // Vertex N, texture xy
+                float v0tx = xOffset + (coords[0] & 0xFF) / divX;
+                float v0ty = yOffset + (coords[1] & 0xFF) / divY;
+
+                float v1tx = xOffset + (coords[2] & 0xFF) / divX;
+                float v1ty = yOffset + (coords[3] & 0xFF) / divY;
+
+                float v2tx = xOffset + (coords[4] & 0xFF) / divX;
+                float v2ty = yOffset + (coords[5] & 0xFF) / divY;
+
+                float v3tx = xOffset + (coords[6] & 0xFF) / divX;
+                float v3ty = yOffset + (coords[7] & 0xFF) / divY;
+
+                meshBuilderFromQuad.putVertex(vertices[v0], v0tx, v0ty);
+                meshBuilderFromQuad.putVertex(vertices[v1], v1tx, v1ty);
+                meshBuilderFromQuad.putVertex(vertices[v2], v2tx, v2ty);
+                meshBuilderFromQuad.putVertex(vertices[v3], v3tx, v3ty);
+                meshBuilderFromQuad.conjureTrianglesAfterQuadPut();
+            }
         }
 
-        Random r = new Random();
-        for (int i = 0; i < textCoords.length; i++) {
-            textCoords[i] = r.nextFloat();
-        }
 
-
-        int[] suboOffsets = mesh.getSuboOffsets();
-        if (suboOffsets.length != 1) {
-            System.out.println("Bad support for >1 subos: " + suboOffsets.length);
-            throw new UnsupportedOperationException("not yet impl");
-        }
-        int suboOffset = suboOffsets[0];
-        SuboElement.FaceInfo[] faceInfos = senFile.getSubo().elementByOffset(suboOffset).faceInfos;
-
-
-        int[] indices = new int[faceInfos.length * 6];
-
-        for (int i = 0; i < faceInfos.length; i++) {
-            SuboElement.FaceInfo faceInfo = faceInfos[i];
-            byte[] vertexIndices = faceInfo.vertexIndices;
-            int v0 = vertexIndices[0] & 0xFF;
-            int v1 = vertexIndices[1] & 0xFF;
-            int v2 = vertexIndices[2] & 0xFF;
-            int v3 = vertexIndices[3] & 0xFF;
-
-            // Convert to triangles, should be quads!
-            int idx = i * 6;
-            indices[idx] = v0;
-            indices[idx + 1] = v1;
-            indices[idx + 2] = v2;
-            indices[idx + 3] = v3;
-            indices[idx + 4] = v0;
-            indices[idx + 5] = v2;
-        }
-
-        int textureIndexForFace = faceInfos[0].getMapiIndex();
-        MapiElement mapiElement = senFile.getMapi().elements[textureIndexForFace];
-        int mergedTpgFileIndex = mapiElement.mergedTpgFileIndex;
-
-        Texture texture = getRealTexture(mergedTpgFileIndex);
-
-        return new MeshTri(positions, textCoords, indices, texture);
+        return meshBuilderFromQuad.build();
     }
 
-    private static Texture getRealTexture(int mergedTpgFileIndex) {
-        int textureGlId = MergedTpgTextureRepo.REPO.textureGlIdForMergedId(mergedTpgFileIndex);
-        return new Texture(textureGlId);
-    }
+    private static final class MeshBuilderFromQuad {
 
-    public static Texture getDummyTexture() {
-        try {
-            return new Texture("/textures/grassblock.png");
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.exit(-1);
-            return null;
+        private final List<Float> vertexFloats = new ArrayList<>();
+        private final List<Float> textureFloats = new ArrayList<>();
+        private final List<Integer> indices = new ArrayList<>();
+        private int indexOffset = 0;
+
+        void putVertex(Vertex vertex, float textureX, float textureY) {
+            vertexFloats.add(vertex.x * SCALE);
+            vertexFloats.add(vertex.y * -SCALE);
+            vertexFloats.add(vertex.z * SCALE);
+            textureFloats.add(textureX);
+            textureFloats.add(textureY);
+        }
+
+        void conjureTrianglesAfterQuadPut() {
+            int offset = 4 * indexOffset;
+
+            indices.add(offset);
+            indices.add(offset + 1);
+            indices.add(offset + 2);
+
+            indices.add(offset + 3);
+            indices.add(offset);
+            indices.add(offset + 2);
+
+            indexOffset++;
+        }
+
+        public MeshTri build() {
+            float[] positions = Utils.floatListToArray(vertexFloats);
+            float[] textCoords = Utils.floatListToArray(textureFloats);
+            int[] indices = Utils.intListToArray(this.indices);
+
+
+            Texture texture = TextureAtlas.getSingletonTexture();
+//            Texture texture = MergedTpgTextureRepo.REPO.textureForMergedId(15);
+            return new MeshTri(positions, textCoords, indices, texture);
         }
     }
 }

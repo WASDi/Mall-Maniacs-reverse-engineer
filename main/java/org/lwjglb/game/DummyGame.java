@@ -61,12 +61,6 @@ public class DummyGame implements IGameLogic {
         meshFromTranslatedSen();
     }
 
-    private void meshFromNaiveSen() {
-        GameItem item = new GameItem(new NaiveSenfileMesh(45));
-        item.setPosition(2, 1, 0);
-        gameItems.add(item);
-    }
-
     private void meshFromTranslatedSen() {
         GameItem item = new GameItem(LwjglMeshCreator.makeMeAMesh(44));
         item.setPosition(2, 1, 0);

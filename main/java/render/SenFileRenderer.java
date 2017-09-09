@@ -188,21 +188,59 @@ public class SenFileRenderer {
                 int mergedTpgFileIndex = mapiElement.mergedTpgFileIndex;
                 byte[] coords = mapiElement.textureCoordBytes;
 
-                glBindTexture(GL_TEXTURE_2D, texture_MERGED[mergedTpgFileIndex]);
-                glBegin(GL_QUADS);
-
                 float div = 256f;
-                glTexCoord2f((coords[0] & 0xFF) / div, (coords[1] & 0xFF) / div);
-                putVertex(vertices[v0]);
+                // Vertex N, texture x y
+                float v0tx = (coords[0] & 0xFF) / div;
+                float v0ty = (coords[1] & 0xFF) / div;
+                float v1tx = (coords[2] & 0xFF) / div;
+                float v1ty = (coords[3] & 0xFF) / div;
+                float v2tx = (coords[4] & 0xFF) / div;
+                float v2ty = (coords[5] & 0xFF) / div;
+                float v3tx = (coords[6] & 0xFF) / div;
+                float v3ty = (coords[7] & 0xFF) / div;
 
-                glTexCoord2f((coords[2] & 0xFF) / div, (coords[3] & 0xFF) / div);
-                putVertex(vertices[v1]);
+                glBindTexture(GL_TEXTURE_2D, texture_MERGED[mergedTpgFileIndex]);
 
-                glTexCoord2f((coords[4] & 0xFF) / div, (coords[5] & 0xFF) / div);
-                putVertex(vertices[v2]);
+                boolean quads = true;
 
-                glTexCoord2f((coords[6] & 0xFF) / div, (coords[7] & 0xFF) / div);
-                putVertex(vertices[v3]);
+                if (quads) {
+                    glBegin(GL_QUADS);
+
+                    glTexCoord2f(v0tx, v0ty);
+                    putVertex(vertices[v0]);
+
+                    glTexCoord2f(v1tx, v1ty);
+                    putVertex(vertices[v1]);
+
+                    glTexCoord2f(v2tx, v2ty);
+                    putVertex(vertices[v2]);
+
+                    glTexCoord2f(v3tx, v3ty);
+                    putVertex(vertices[v3]);
+                } else {
+                    glBegin(GL_TRIANGLES);
+
+                    glTexCoord2f(v0tx, v0ty);
+                    putVertex(vertices[v0]);
+
+                    glTexCoord2f(v1tx, v1ty);
+                    putVertex(vertices[v1]);
+
+                    glTexCoord2f(v2tx, v2ty);
+                    putVertex(vertices[v2]);
+
+                    // --- //
+
+                    glTexCoord2f(v3tx, v3ty);
+                    putVertex(vertices[v3]);
+
+                    glTexCoord2f(v0tx, v0ty);
+                    putVertex(vertices[v0]);
+
+                    glTexCoord2f(v2tx, v2ty);
+                    putVertex(vertices[v2]);
+                }
+
 
                 glEnd();
             }
