@@ -9,7 +9,9 @@ import org.lwjglb.engine.Window;
 import org.lwjglb.engine.graph.Camera;
 import org.lwjglb.engine.graph.IMesh;
 import render.LwjglMeshCreator;
+import senfile.SenFile;
 import senfile.factories.SenFileFactory;
+import senfile.parts.mesh.Mesh;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -65,20 +67,40 @@ public class DummyGame implements IGameLogic {
 
     private void addAllTheThings() {
 
-        int numMeshes = SenFileFactory.icaSingleton().getMeshes().size();
+        SenFile senFile = SenFileFactory.icaSingleton();
+
+        List<Mesh> meshes = senFile.getMeshes();
+
+        List<Mesh> meshesToRender = new ArrayList<>();
+        for (Mesh mesh : meshes) {
+            if (!mesh.isUnderscore()) {
+                meshesToRender.add(mesh);
+            }
+        }
+
+        int numMeshes = meshesToRender.size();
         int cols = (int) Math.round(Math.sqrt(numMeshes));
         int halfCols = cols / 2;
-        int spreadOut = 2;
+        int spreadOut = 3;
 
         for (int i = 0; i < numMeshes; i++) {
-            int x = i % cols;
-            int y = i / cols;
+            Mesh mesh = meshesToRender.get(i);
+            int xIdx = i % cols;
+            int yIdx = i / cols;
 
-            GameItem item = new GameItem(LwjglMeshCreator.makeMeAMesh(i));
-            item.setPosition(spreadOut * (x - halfCols),
-                             -2,
-                             spreadOut * (y - halfCols));
+            GameItem item = new GameItem(LwjglMeshCreator.crateMeshFromSenMesh(senFile, mesh));
+            int x = spreadOut * (xIdx - halfCols);
+            int y = -2;
+            int z = spreadOut * (yIdx - halfCols);
+            item.setPosition(x,
+                             y,
+                             z);
             gameItems.add(item);
+
+            GameItem smallCube = new GameItem(TriCube.MESH);
+            smallCube.setScale(0.05f);
+            smallCube.setPosition(x, y, z);
+            gameItems.add(smallCube);
         }
     }
 
