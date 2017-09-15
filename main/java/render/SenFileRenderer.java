@@ -12,7 +12,7 @@ import senfile.factories.SenFileFactory;
 import senfile.parts.elements.MapiElement;
 import senfile.parts.elements.ObjiElement;
 import senfile.parts.elements.SuboElement;
-import senfile.parts.mesh.Mesh;
+import senfile.parts.mesh.SenMesh;
 import senfile.parts.mesh.Vertex;
 import tpgviewer.tpg.TpgImage;
 import tpgviewer.tpg.TpgImageFactory;
@@ -169,7 +169,7 @@ public class SenFileRenderer {
     }
 
     private void renderFromSenFile(int meshIdx) {
-        Mesh mesh = senFile.getMeshes().get(meshIdx);
+        SenMesh mesh = senFile.getMeshes().get(meshIdx);
         int[] suboOffsets = mesh.getSuboOffsets();
         Vertex[] vertices = mesh.getVertices();
 
@@ -318,7 +318,7 @@ public class SenFileRenderer {
     }
 
     private void renderMany(float angle) {
-        List<Mesh> meshes = senFile.getMeshes();
+        List<SenMesh> meshes = senFile.getMeshes();
         for (int i = 0; i < meshes.size(); i++) {
             String meshName = meshes.get(i).name;
             if (meshName.charAt(0) == '_' || !meshName.contains("LAMP")) {

@@ -2,7 +2,7 @@ package senfile.parts.mesh;
 
 import senfile.factories.VerticesFactory;
 
-public class MeshObject extends Mesh {
+public class MeshObject extends SenMesh {
 
     public final int constant8; // == 100
     public final int constant9; // == 10000000

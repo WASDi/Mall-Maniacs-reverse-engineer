@@ -10,7 +10,7 @@ import senfile.parts.Subo;
 import senfile.parts.Tani;
 import senfile.parts.Tnam;
 import senfile.parts.elements.ObjiElement;
-import senfile.parts.mesh.Mesh;
+import senfile.parts.mesh.SenMesh;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -67,7 +67,7 @@ public class SenFileFactory {
         }
         int totalBytesLeft = buffer.getInt();
 
-        List<Mesh> meshes = new ArrayList<>();
+        List<SenMesh> meshes = new ArrayList<>();
         Cols cols = null;
         Mapi mapi = null;
         Subo subo = null;
@@ -79,7 +79,7 @@ public class SenFileFactory {
         while (buffer.hasRemaining()) {
             int header = buffer.getInt();
             if (header == HeaderTexts.MESH) {
-                Mesh mesh = MeshFactory.parseFromBufferPosition(buffer);
+                SenMesh mesh = MeshFactory.parseFromBufferPosition(buffer);
                 meshes.add(mesh);
             } else if (header == HeaderTexts.COLS) {
                 if (cols != null) {
@@ -127,7 +127,7 @@ public class SenFileFactory {
         return new SenFile(title, meshes, mapi, subo, obji);
     }
 
-    private static void setMeshNamesForObji(List<Mesh> meshes, Obji obji) {
+    private static void setMeshNamesForObji(List<SenMesh> meshes, Obji obji) {
         if (meshes.size() != obji.elements.length) {
             System.out.printf("Not same amount of meshes as obji! %d and %d\n", meshes.size(), obji.elements.length);
             for (ObjiElement element : obji.elements) {
@@ -137,7 +137,7 @@ public class SenFileFactory {
         }
 
         for (int i = 0; i < meshes.size(); i++) {
-            Mesh mesh = meshes.get(i);
+            SenMesh mesh = meshes.get(i);
             ObjiElement objiElement = obji.elements[i];
 
             objiElement.setNameOfMesh(mesh.name);

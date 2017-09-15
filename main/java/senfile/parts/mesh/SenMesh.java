@@ -1,6 +1,6 @@
 package senfile.parts.mesh;
 
-public abstract class Mesh {
+public abstract class SenMesh {
 
     protected static final int SHARED_DATA_SIZE = 12;
 
@@ -24,7 +24,7 @@ public abstract class Mesh {
     public final int constant7; // == 0
 
 
-    public Mesh(String name, int[] rawData) {
+    public SenMesh(String name, int[] rawData) {
         this.name = name;
         int idx = 0;
         this.constant1 = rawData[idx++];

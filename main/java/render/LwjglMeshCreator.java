@@ -7,7 +7,7 @@ import render.util.Utils;
 import senfile.SenFile;
 import senfile.parts.elements.MapiElement;
 import senfile.parts.elements.SuboElement;
-import senfile.parts.mesh.Mesh;
+import senfile.parts.mesh.SenMesh;
 import senfile.parts.mesh.Vertex;
 
 import java.util.ArrayList;
@@ -17,7 +17,7 @@ public class LwjglMeshCreator {
 
     private static final float SCALE = 1 / 3000f;
 
-    public static MeshTri crateMeshFromSenMesh(SenFile senFile, Mesh mesh) {
+    public static MeshTri crateMeshFromSenMesh(SenFile senFile, SenMesh mesh) {
 
         int[] suboOffsets = mesh.getSuboOffsets();
         Vertex[] vertices = mesh.getVertices();

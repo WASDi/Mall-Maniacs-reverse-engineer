@@ -2,7 +2,7 @@ package senfile.parts.mesh;
 
 import senfile.factories.VerticesFactory;
 
-public class MeshCharacter extends Mesh {
+public class MeshCharacter extends SenMesh {
 
     public final int constant8; // == 280 (0x118)
     public final int constant9; // == 0xFF430000
