@@ -2,7 +2,7 @@ package senfile;
 
 import senfile.factories.SenFileFactory;
 import senfile.parts.elements.SuboElement;
-import senfile.parts.mesh.Mesh;
+import senfile.parts.mesh.SenMesh;
 import senfile.statistics.GroupedContentsDumper;
 import senfile.statistics.ValueOfInterestGetter;
 
@@ -66,8 +66,8 @@ public class Main_SenFile {
         List<SenFile> senFiles = getAllSenFiles();
         Random r = new Random();
         SenFile senFile = senFiles.get(r.nextInt(senFiles.size()));
-        List<Mesh> meshes = senFile.getMeshes();
-        Mesh mesh = meshes.get(r.nextInt(meshes.size()));
+        List<SenMesh> meshes = senFile.getMeshes();
+        SenMesh mesh = meshes.get(r.nextInt(meshes.size()));
 
         System.out.println("Rendering mesh: " + mesh.name + " from " + senFile.getTitle());
         RenderMesh.render(mesh, true);
@@ -78,7 +78,7 @@ public class Main_SenFile {
 //        List<SenFile> senFiles = getAllSenFiles();
         List<SenFile> senFiles = getSingleSenFile("/home/wasd/Downloads/Mall Maniacs/scene_aqua/OBJECTS.SEN");
 
-        Optional<Mesh> meshOptional = senFiles
+        Optional<SenMesh> meshOptional = senFiles
                 .stream()
                 .flatMap(senFile -> senFile.getMeshes().stream())
                 .filter(mesh -> mesh.name.equals(nameToFind))
@@ -87,7 +87,7 @@ public class Main_SenFile {
         if (!meshOptional.isPresent()) {
             throw new IllegalArgumentException("Mesh " + nameToFind + " not found");
         }
-        Mesh mesh = meshOptional.get();
+        SenMesh mesh = meshOptional.get();
 
 //        System.out.println("Vertex[] vertices = {");
 //        for (Vertex vertex : mesh.getVertices()) {

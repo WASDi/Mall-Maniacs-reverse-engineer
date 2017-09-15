@@ -3,15 +3,15 @@ package senfile.statistics;
 import senfile.parts.elements.MapiElement;
 import senfile.parts.elements.ObjiElement;
 import senfile.parts.elements.SuboElement;
-import senfile.parts.mesh.Mesh;
 import senfile.parts.mesh.MeshCharacter;
 import senfile.parts.mesh.MeshObject;
+import senfile.parts.mesh.SenMesh;
 
 import java.util.function.Function;
 
 public class ValueOfInterestGetter {
 
-    private final Function<Mesh, Object> forCommon;
+    private final Function<SenMesh, Object> forCommon;
     private final Function<MeshCharacter, Object> forCharacter;
     private final Function<MeshObject, Object> forObject;
 
@@ -19,7 +19,7 @@ public class ValueOfInterestGetter {
     public final Function<SuboElement, Object> forSubo;
     public final Function<ObjiElement, Object> forObji;
 
-    public ValueOfInterestGetter(Function<Mesh, Object> forCommon,
+    public ValueOfInterestGetter(Function<SenMesh, Object> forCommon,
                                  Function<MeshCharacter, Object> forCharacter,
                                  Function<MeshObject, Object> forObject,
                                  Function<MapiElement, Object> forMapi,
@@ -33,7 +33,7 @@ public class ValueOfInterestGetter {
         this.forObji = forObji;
     }
 
-    public Object getFor(Mesh mesh) {
+    public Object getFor(SenMesh mesh) {
         if (mesh instanceof MeshCharacter) {
             Object result = forCharacter.apply((MeshCharacter) mesh);
             if (result != null) {

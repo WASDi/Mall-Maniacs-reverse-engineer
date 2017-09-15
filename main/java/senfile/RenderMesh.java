@@ -3,7 +3,7 @@ package senfile;
 import com.wasd.lib3d.World;
 import com.wasd.lib3d.gui.Window3D;
 import com.wasd.lib3d.objects.Box;
-import senfile.parts.mesh.Mesh;
+import senfile.parts.mesh.SenMesh;
 import senfile.parts.mesh.Vertex;
 
 import javax.swing.SwingUtilities;
@@ -12,7 +12,7 @@ import java.util.ArrayList;
 
 public class RenderMesh {
 
-    public static void render(Mesh mesh, boolean incrementally) {
+    public static void render(SenMesh mesh, boolean incrementally) {
         World world = new World();
         if (!incrementally) {
             for (Vertex vertex : mesh.getVertices()) {

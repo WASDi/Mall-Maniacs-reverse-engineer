@@ -11,7 +11,7 @@ import org.lwjglb.engine.graph.IMesh;
 import render.LwjglMeshCreator;
 import senfile.SenFile;
 import senfile.factories.SenFileFactory;
-import senfile.parts.mesh.Mesh;
+import senfile.parts.mesh.SenMesh;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -69,10 +69,10 @@ public class DummyGame implements IGameLogic {
 
         SenFile senFile = SenFileFactory.icaSingleton();
 
-        List<Mesh> meshes = senFile.getMeshes();
+        List<SenMesh> meshes = senFile.getMeshes();
 
-        List<Mesh> meshesToRender = new ArrayList<>();
-        for (Mesh mesh : meshes) {
+        List<SenMesh> meshesToRender = new ArrayList<>();
+        for (SenMesh mesh : meshes) {
             if (!mesh.isUnderscore()) {
                 meshesToRender.add(mesh);
             }
@@ -84,7 +84,7 @@ public class DummyGame implements IGameLogic {
         int spreadOut = 3;
 
         for (int i = 0; i < numMeshes; i++) {
-            Mesh mesh = meshesToRender.get(i);
+            SenMesh mesh = meshesToRender.get(i);
             int xIdx = i % cols;
             int yIdx = i / cols;
 

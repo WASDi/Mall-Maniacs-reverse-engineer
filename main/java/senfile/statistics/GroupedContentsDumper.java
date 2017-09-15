@@ -5,7 +5,7 @@ import senfile.Util;
 import senfile.parts.elements.MapiElement;
 import senfile.parts.elements.ObjiElement;
 import senfile.parts.elements.SuboElement;
-import senfile.parts.mesh.Mesh;
+import senfile.parts.mesh.SenMesh;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -99,7 +99,7 @@ public class GroupedContentsDumper {
                                                                               ValueOfInterestGetter valueOfInterestGetter) {
         Map<Object, List<FileMeshDesignator>> value2occurrences = new HashMap<>();
         for (SenFile senFile : senFiles) {
-            for (Mesh mesh : senFile.getMeshes()) {
+            for (SenMesh mesh : senFile.getMeshes()) {
                 if (Util.IGNORE_UNDERLINES && mesh.name.charAt(0) == '_') {
                     continue;
                 }

@@ -2,15 +2,15 @@ package senfile.factories;
 
 import senfile.HeaderTexts;
 import senfile.Util;
-import senfile.parts.mesh.Mesh;
 import senfile.parts.mesh.MeshCharacter;
 import senfile.parts.mesh.MeshObject;
+import senfile.parts.mesh.SenMesh;
 
 import java.nio.ByteBuffer;
 
 public class MeshFactory {
 
-    public static Mesh parseFromBufferPosition(ByteBuffer buffer) {
+    public static SenMesh parseFromBufferPosition(ByteBuffer buffer) {
         int bytesLeftUntilName = buffer.getInt();
         int nameOffset = buffer.position() + bytesLeftUntilName;
 
