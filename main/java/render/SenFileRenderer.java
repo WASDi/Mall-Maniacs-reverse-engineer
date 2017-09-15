@@ -201,45 +201,27 @@ public class SenFileRenderer {
 
                 glBindTexture(GL_TEXTURE_2D, texture_MERGED[mergedTpgFileIndex]);
 
-                boolean quads = true;
+                glBegin(GL_TRIANGLES);
 
-                if (quads) {
-                    glBegin(GL_QUADS);
+                glTexCoord2f(v0tx, v0ty);
+                putVertex(vertices[v0]);
 
-                    glTexCoord2f(v0tx, v0ty);
-                    putVertex(vertices[v0]);
+                glTexCoord2f(v1tx, v1ty);
+                putVertex(vertices[v1]);
 
-                    glTexCoord2f(v1tx, v1ty);
-                    putVertex(vertices[v1]);
+                glTexCoord2f(v2tx, v2ty);
+                putVertex(vertices[v2]);
 
-                    glTexCoord2f(v2tx, v2ty);
-                    putVertex(vertices[v2]);
+                // --- //
 
-                    glTexCoord2f(v3tx, v3ty);
-                    putVertex(vertices[v3]);
-                } else {
-                    glBegin(GL_TRIANGLES);
+                glTexCoord2f(v3tx, v3ty);
+                putVertex(vertices[v3]);
 
-                    glTexCoord2f(v0tx, v0ty);
-                    putVertex(vertices[v0]);
+                glTexCoord2f(v0tx, v0ty);
+                putVertex(vertices[v0]);
 
-                    glTexCoord2f(v1tx, v1ty);
-                    putVertex(vertices[v1]);
-
-                    glTexCoord2f(v2tx, v2ty);
-                    putVertex(vertices[v2]);
-
-                    // --- //
-
-                    glTexCoord2f(v3tx, v3ty);
-                    putVertex(vertices[v3]);
-
-                    glTexCoord2f(v0tx, v0ty);
-                    putVertex(vertices[v0]);
-
-                    glTexCoord2f(v2tx, v2ty);
-                    putVertex(vertices[v2]);
-                }
+                glTexCoord2f(v2tx, v2ty);
+                putVertex(vertices[v2]);
 
 
                 glEnd();

@@ -1,6 +1,6 @@
 package render;
 
-import org.lwjglb.engine.graph.MeshTri;
+import org.lwjglb.engine.graph.Mesh;
 import org.lwjglb.engine.graph.Texture;
 import render.texture.TextureAtlas;
 import render.util.Utils;
@@ -17,7 +17,7 @@ public class LwjglMeshCreator {
 
     private static final float SCALE = 1 / 3000f;
 
-    public static MeshTri crateMeshFromSenMesh(SenFile senFile, SenMesh mesh) {
+    public static Mesh crateMeshFromSenMesh(SenFile senFile, SenMesh mesh) {
 
         int[] suboOffsets = mesh.getSuboOffsets();
         Vertex[] vertices = mesh.getVertices();
@@ -99,7 +99,7 @@ public class LwjglMeshCreator {
             indexOffset++;
         }
 
-        public MeshTri build() {
+        public Mesh build() {
             float[] positions = Utils.floatListToArray(vertexFloats);
             float[] textCoords = Utils.floatListToArray(textureFloats);
             int[] indices = Utils.intListToArray(this.indices);
@@ -107,7 +107,7 @@ public class LwjglMeshCreator {
 
             Texture texture = TextureAtlas.getSingletonTexture();
 //            Texture texture = MergedTpgTextureRepo.REPO.textureForMergedId(15);
-            return new MeshTri(positions, textCoords, indices, texture);
+            return new Mesh(positions, textCoords, indices, texture);
         }
     }
 }

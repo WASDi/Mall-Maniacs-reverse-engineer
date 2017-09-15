@@ -14,7 +14,7 @@ import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.*;
 
-public class MeshQuad implements IMesh {
+public class Mesh {
 
     private final int vaoId;
 
@@ -24,14 +24,14 @@ public class MeshQuad implements IMesh {
 
     private final Texture texture;
 
-    public MeshQuad(float[] positions, float[] textCoords, int[] indices, Texture texture) {
+    public Mesh(float[] positions, float[] textCoords, int[] indices, Texture texture) {
         FloatBuffer posBuffer = null;
         FloatBuffer textCoordsBuffer = null;
         IntBuffer indicesBuffer = null;
         try {
             this.texture = texture;
             vertexCount = indices.length;
-            vboIdList = new ArrayList<>();
+            vboIdList = new ArrayList();
 
             vaoId = glGenVertexArrays();
             glBindVertexArray(vaoId);
@@ -96,7 +96,7 @@ public class MeshQuad implements IMesh {
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);
 
-        glDrawElements(GL_QUADS, getVertexCount(), GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, getVertexCount(), GL_UNSIGNED_INT, 0);
 
         // Restore state
         glDisableVertexAttribArray(0);

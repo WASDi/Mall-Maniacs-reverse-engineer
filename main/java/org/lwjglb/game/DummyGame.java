@@ -7,7 +7,7 @@ import org.lwjglb.engine.IGameLogic;
 import org.lwjglb.engine.MouseInput;
 import org.lwjglb.engine.Window;
 import org.lwjglb.engine.graph.Camera;
-import org.lwjglb.engine.graph.IMesh;
+import org.lwjglb.engine.graph.Mesh;
 import render.LwjglMeshCreator;
 import senfile.SenFile;
 import senfile.factories.SenFileFactory;
@@ -50,9 +50,6 @@ public class DummyGame implements IGameLogic {
 //        GL11.glEnable(GL11.GL_CULL_FACE);
 
         addCube(0, 0, -2, TriCube.MESH);
-
-        addCube(0, 0, -1, QuadCube.MY_MESH);
-        addCube(0, -1, -1, TriCube.MY_MESH);
 
         addCube(0, 0, 1, TriCube.MESH);
 
@@ -104,7 +101,7 @@ public class DummyGame implements IGameLogic {
         }
     }
 
-    private void addCube(float x, float y, float z, IMesh mesh) {
+    private void addCube(float x, float y, float z, Mesh mesh) {
         GameItem item = new GameItem(mesh);
         item.setScale(0.5f);
         item.setPosition(x, y, z);
