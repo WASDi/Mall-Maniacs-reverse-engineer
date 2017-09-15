@@ -1,11 +1,11 @@
 package org.lwjglb.engine;
 
 import org.joml.Vector3f;
-import org.lwjglb.engine.graph.IMesh;
+import org.lwjglb.engine.graph.Mesh;
 
 public class GameItem {
 
-    private final IMesh mesh;
+    private final Mesh mesh;
     
     private final Vector3f position;
     
@@ -13,7 +13,7 @@ public class GameItem {
 
     private final Vector3f rotation;
 
-    public GameItem(IMesh mesh) {
+    public GameItem(Mesh mesh) {
         this.mesh = mesh;
         position = new Vector3f(0, 0, 0);
         scale = 1;
@@ -48,7 +48,7 @@ public class GameItem {
         this.rotation.z = z;
     }
 
-    public IMesh getMesh() {
+    public Mesh getMesh() {
         return mesh;
     }
 }
