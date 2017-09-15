@@ -29,6 +29,8 @@ public class DummyGame implements IGameLogic {
     private final Camera camera;
 
     private List<GameItem> gameItems = new ArrayList<>();
+    private List<SenMesh> meshesToRender;
+    private List<Vector3f> meshesToRenderPos;
 
     private static final float CAMERA_POS_STEP = 0.1f;
 
@@ -68,7 +70,8 @@ public class DummyGame implements IGameLogic {
 
         List<SenMesh> meshes = senFile.getMeshes();
 
-        List<SenMesh> meshesToRender = new ArrayList<>();
+        meshesToRender = new ArrayList<>();
+        meshesToRenderPos = new ArrayList<>();
         for (SenMesh mesh : meshes) {
             if (!mesh.isUnderscore()) {
                 meshesToRender.add(mesh);
@@ -93,9 +96,10 @@ public class DummyGame implements IGameLogic {
                              y,
                              z);
             gameItems.add(item);
+            meshesToRenderPos.add(new Vector3f(x, y, z));
 
             GameItem smallCube = new GameItem(TriCube.MESH);
-            smallCube.setScale(0.05f);
+            smallCube.setScale(0.1f);
             smallCube.setPosition(x, y, z);
             gameItems.add(smallCube);
         }
@@ -111,21 +115,55 @@ public class DummyGame implements IGameLogic {
     @Override
     public void input(Window window, MouseInput mouseInput) {
         cameraInc.set(0, 0, 0);
+
         if (window.isKeyPressed(GLFW_KEY_W)) {
             cameraInc.z = -1;
         } else if (window.isKeyPressed(GLFW_KEY_S)) {
             cameraInc.z = 1;
         }
+
         if (window.isKeyPressed(GLFW_KEY_A)) {
             cameraInc.x = -1;
         } else if (window.isKeyPressed(GLFW_KEY_D)) {
             cameraInc.x = 1;
         }
+
         if (window.isKeyPressed(GLFW_KEY_Z)) {
             cameraInc.y = -1;
         } else if (window.isKeyPressed(GLFW_KEY_X)) {
             cameraInc.y = 1;
         }
+
+
+        if (window.isKeyPressed(GLFW_KEY_Y)) {
+            if (noPressY) {
+                noPressY = false;
+                debugClosestItem();
+            }
+        } else {
+            noPressY = true;
+        }
+
+    }
+
+    boolean noPressY = true;
+
+    private void debugClosestItem() {
+        Vector3f myPos = camera.getPosition();
+        float minDistance = Float.MAX_VALUE;
+        SenMesh closestMesh = null;
+
+        for (int i = 0; i < meshesToRender.size(); i++) {
+            SenMesh mesh = meshesToRender.get(i);
+            Vector3f pos = meshesToRenderPos.get(i);
+            float distance = myPos.distance(pos);
+            if (distance < minDistance) {
+                minDistance = distance;
+                closestMesh = mesh;
+            }
+        }
+
+        System.out.println(closestMesh.name);
     }
 
     @Override
