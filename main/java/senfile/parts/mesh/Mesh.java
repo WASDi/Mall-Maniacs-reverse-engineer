@@ -43,6 +43,10 @@ public abstract class Mesh {
 //        System.out.println(name);
     }
 
+    public boolean isUnderscore() {
+        return name.charAt(0) == '_';
+    }
+
     public abstract Vertex[] getVertices();
 
     public abstract int[] getSuboOffsets();

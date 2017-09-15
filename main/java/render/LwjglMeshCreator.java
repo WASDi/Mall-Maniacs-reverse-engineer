@@ -5,7 +5,6 @@ import org.lwjglb.engine.graph.Texture;
 import render.texture.TextureAtlas;
 import render.util.Utils;
 import senfile.SenFile;
-import senfile.factories.SenFileFactory;
 import senfile.parts.elements.MapiElement;
 import senfile.parts.elements.SuboElement;
 import senfile.parts.mesh.Mesh;
@@ -18,10 +17,8 @@ public class LwjglMeshCreator {
 
     private static final float SCALE = 1 / 3000f;
 
-    public static MeshTri makeMeAMesh(int meshIdx) {
-        SenFile senFile = SenFileFactory.icaSingleton();
+    public static MeshTri crateMeshFromSenMesh(SenFile senFile, Mesh mesh) {
 
-        Mesh mesh = senFile.getMeshes().get(meshIdx);
         int[] suboOffsets = mesh.getSuboOffsets();
         Vertex[] vertices = mesh.getVertices();
 
