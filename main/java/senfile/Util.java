@@ -76,10 +76,23 @@ public class Util {
         for (int suboOffset : mesh.getSuboOffsets()) {
             SuboElement subo = senFile.subo.elementByOffset(suboOffset);
             if (subo.transparency != 0) {
+//                System.out.println(mesh.name + ": " + subo.transparency);
+            }
+            if (subo.transparency == 64) {
                 return true;
             }
         }
         return false;
+    }
+
+    public static int getTransparency(SenMesh mesh, SenFile senFile) {
+        for (int suboOffset : mesh.getSuboOffsets()) {
+            SuboElement subo = senFile.subo.elementByOffset(suboOffset);
+            if (subo.transparency != 0) {
+                return subo.transparency;
+            }
+        }
+        return -1000;
     }
 
 
