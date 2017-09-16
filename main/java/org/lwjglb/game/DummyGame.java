@@ -12,6 +12,7 @@ import render.LwjglMeshCreator;
 import render.VertexTranslator;
 import senfile.GameMap;
 import senfile.SenFile;
+import senfile.Util;
 import senfile.factories.SenFileFactory;
 import senfile.parts.elements.ObjiElement;
 import senfile.parts.mesh.SenMesh;
@@ -49,15 +50,39 @@ public class DummyGame implements IGameLogic {
     @Override
     public void init(Window window) throws Exception {
         renderer.init(window);
-        addAllTheThings();
+
+        SenFile senFile = SenFileFactory.getMap(GameMap.SELECTED_MAP);
+        addAllTheThings(senFile);
+        sortGameItemsByTransparency(senFile);
     }
 
-    private void addAllTheThings() {
+    // Fixes this bug https://www.gamedev.net/forums/topic/184383-transparency-troubles/
+    private void sortGameItemsByTransparency(SenFile senFile) {
+        List<GameItem> opaque = new ArrayList<>(gameItems.size());
+        List<GameItem> transparent = new ArrayList<>(gameItems.size());
+
+        for (GameItem gameItem : gameItems) {
+            if (gameItem.senMeshIdx == -1) {
+                opaque.add(gameItem);
+                continue;
+            }
+            SenMesh senMesh = senFile.meshes.get(gameItem.senMeshIdx);
+            if (Util.hasTransparency(senMesh, senFile)) {
+                transparent.add(gameItem);
+            } else {
+                opaque.add(gameItem);
+            }
+        }
+
+        gameItems.clear();
+        gameItems.addAll(opaque);
+        gameItems.addAll(transparent);
+    }
+
+    private void addAllTheThings(SenFile senFile) {
 
         glEnable(GL_CULL_FACE);
         glCullFace(GL_FRONT);
-
-        SenFile senFile = SenFileFactory.getMap(GameMap.SELECTED_MAP);
 
         if (RENDER_UNDERSCORES) {
             meshesToRender = senFile.meshes;
@@ -76,7 +101,7 @@ public class DummyGame implements IGameLogic {
 
             GameItem item;
             try {
-                item = new GameItem(LwjglMeshCreator.crateMeshFromSenMesh(senFile, mesh));
+                item = new GameItem(LwjglMeshCreator.crateMeshFromSenMesh(senFile, mesh), mesh.meshIdx);
             } catch (RuntimeException ex) {
                 meshesToRenderPos.add(new Vector3f(9999));
                 System.err.println("Erroneous mesh: " + mesh.name);
@@ -103,7 +128,7 @@ public class DummyGame implements IGameLogic {
     }
 
     private void addCube(float x, float y, float z, Mesh mesh) {
-        GameItem item = new GameItem(mesh);
+        GameItem item = new GameItem(mesh, -1);
         item.setScale(0.1f);
         item.setPosition(x, y, z);
         gameItems.add(item);

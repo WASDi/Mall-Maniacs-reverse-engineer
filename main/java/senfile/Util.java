@@ -1,12 +1,12 @@
 package senfile;
 
+import senfile.parts.elements.SuboElement;
+import senfile.parts.mesh.SenMesh;
+
 import java.io.File;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public class Util {
 
@@ -72,11 +72,14 @@ public class Util {
     }
 
 
-    public static <T extends Comparable<T>> void removeDuplicatesAndSort(List<T> list) {
-        Set<T> set = new HashSet<>(list);
-        list.clear();
-        list.addAll(set);
-        Collections.sort(list);
+    public static boolean hasTransparency(SenMesh mesh, SenFile senFile) {
+        for (int suboOffset : mesh.getSuboOffsets()) {
+            SuboElement subo = senFile.subo.elementByOffset(suboOffset);
+            if (subo.transparency != 0) {
+                return true;
+            }
+        }
+        return false;
     }
 
 
