@@ -185,7 +185,7 @@ public class SenFileRenderer {
 
                 int textureIndexForFace = faceInfo.getMapiIndex();
                 MapiElement mapiElement = senFile.mapi.elements[textureIndexForFace];
-                int mergedTpgFileIndex = mapiElement.mergedTpgFileIndex;
+                int mergedTpgFileIndex = mapiElement.tpgFileIndex;
                 byte[] coords = mapiElement.textureCoordBytes;
 
                 float div = 256f;

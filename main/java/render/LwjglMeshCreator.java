@@ -36,12 +36,12 @@ public class LwjglMeshCreator {
 
                 int textureIndexForFace = faceInfo.getMapiIndex();
                 MapiElement mapiElement = senFile.mapi.elements[textureIndexForFace];
-                int mergedTpgFileIndex = mapiElement.mergedTpgFileIndex;
+                int tpgFileIndex = mapiElement.tpgFileIndex;
                 byte[] coords = mapiElement.textureCoordBytes;
 
 
-                float xOffset = TextureAtlas.xOffsetFromIndex(mergedTpgFileIndex);
-                float yOffset = TextureAtlas.yOffsetFromIndex(mergedTpgFileIndex);
+                float xOffset = TextureAtlas.xOffsetFromIndex(tpgFileIndex);
+                float yOffset = TextureAtlas.yOffsetFromIndex(tpgFileIndex);
                 float divX = 256f * TextureAtlas.SIZE_X;
                 float divY = 256f * TextureAtlas.SIZE_Y;
 

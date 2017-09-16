@@ -19,7 +19,7 @@ public class SuboSerializer {
             buffer.put(element.numFacesSigned);
             buffer.put(element.triangleOrQuad);
             buffer.put(element._3);
-            buffer.put(element.alpha);
+            buffer.put(element.transparency);
             buffer.putShort(element.constant1);
             buffer.put(element.shortsPerFace);
             buffer.put(element.constant2);

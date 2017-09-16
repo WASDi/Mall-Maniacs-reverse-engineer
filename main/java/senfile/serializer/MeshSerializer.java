@@ -73,8 +73,6 @@ public class MeshSerializer {
             for (Vertex vertex : mesh.vertices) {
                 int part1 = VerticesFactory.reversePart1(vertex);
                 int part2 = VerticesFactory.reversePart2(vertex);
-//                part1 = -1431655766; // AA AA AA AA
-//                part2 = -1431655766;
                 buffer.putInt(part1);
                 buffer.putInt(part2);
             }

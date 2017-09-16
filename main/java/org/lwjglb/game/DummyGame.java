@@ -38,6 +38,7 @@ public class DummyGame implements IGameLogic {
 
     private static final float CAMERA_POS_STEP = 0.1f;
     private static final boolean ADD_DEBUG_CUBES = false;
+    private static final boolean RENDER_UNDERSCORES = false;
 
     public DummyGame() {
         renderer = new Renderer();
@@ -58,14 +59,18 @@ public class DummyGame implements IGameLogic {
 
         SenFile senFile = SenFileFactory.getMap(GameMap.SELECTED_MAP);
 
-        meshesToRender = new ArrayList<>();
-        meshesToRenderPos = new ArrayList<>();
-        for (SenMesh mesh : senFile.meshes) {
-            if (!mesh.ignoreBecauseUnderline()) {
-                meshesToRender.add(mesh);
+        if (RENDER_UNDERSCORES) {
+            meshesToRender = senFile.meshes;
+        } else {
+            meshesToRender = new ArrayList<>();
+            for (SenMesh mesh : senFile.meshes) {
+                if (!mesh.ignoreBecauseUnderline()) {
+                    meshesToRender.add(mesh);
+                }
             }
         }
 
+        meshesToRenderPos = new ArrayList<>();
         for (SenMesh mesh : meshesToRender) {
             ObjiElement obji = senFile.obji.elements[mesh.meshIdx];
 
@@ -74,12 +79,13 @@ public class DummyGame implements IGameLogic {
                 item = new GameItem(LwjglMeshCreator.crateMeshFromSenMesh(senFile, mesh));
             } catch (RuntimeException ex) {
                 meshesToRenderPos.add(new Vector3f(9999));
+                System.err.println("Erroneous mesh: " + mesh.name);
                 ex.printStackTrace();
                 continue;
             }
 
             float x = VertexTranslator.translateX(obji.x);
-            float y = VertexTranslator.translateY(obji.y);
+            float y = VertexTranslator.translateY(obji.y) + (mesh.ignoreBecauseUnderline() ? -10 : 0);
             float z = VertexTranslator.translateZ(obji.z);
 
             item.setPosition(x, y, z);
