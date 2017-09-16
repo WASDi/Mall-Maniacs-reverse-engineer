@@ -37,6 +37,7 @@ public class DummyGame implements IGameLogic {
     private List<Vector3f> meshesToRenderPos;
 
     private static final float CAMERA_POS_STEP = 0.1f;
+    private static final boolean ADD_DEBUG_CUBES = false;
 
     public DummyGame() {
         renderer = new Renderer();
@@ -47,24 +48,6 @@ public class DummyGame implements IGameLogic {
     @Override
     public void init(Window window) throws Exception {
         renderer.init(window);
-//        addCube(0, 0, -2);
-//        addCube(0.5f, 0.5f, -2);
-//        addCube(0, 0, -2.5f);
-//        addCube(0.5f, 0, -2.5f);
-
-
-//        GL11.glEnable(GL11.GL_CULL_FACE);
-
-//        addCube(0, 0, -2, TriCube.MESH);
-//
-//        addCube(0, 0, 1, TriCube.MESH);
-//
-//        addCube(-1, 0, 0, TriCube.MESH);
-//        addCube(0, 1, 0, TriCube.MESH);
-//        addCube(1, 0, 0, TriCube.MESH);
-//        addCube(2, 0, 0, TriCube.MESH);
-
-
         addAllTheThings();
     }
 
@@ -105,16 +88,15 @@ public class DummyGame implements IGameLogic {
             gameItems.add(item);
             meshesToRenderPos.add(new Vector3f(x, y, z));
 
-            GameItem smallCube = new GameItem(TriCube.MESH);
-            smallCube.setScale(0.1f);
-            smallCube.setPosition(x, y, z);
-            gameItems.add(smallCube);
+            if (ADD_DEBUG_CUBES) {
+                addCube(x, y, z, TriCube.MESH);
+            }
         }
     }
 
     private void addCube(float x, float y, float z, Mesh mesh) {
         GameItem item = new GameItem(mesh);
-        item.setScale(0.5f);
+        item.setScale(0.1f);
         item.setPosition(x, y, z);
         gameItems.add(item);
     }
