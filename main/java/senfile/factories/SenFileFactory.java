@@ -126,7 +126,7 @@ public class SenFileFactory {
 
 //        setMeshNamesForObji(meshes, obji);
 
-        return new SenFile(title, fileSize, meshes, mapi, subo, obji, cols, tnam, onam);
+        return new SenFile(title, fileSize, meshes, mapi, subo, obji, cols, tnam, onam, tani);
     }
 
     private static void setMeshNamesForObji(List<SenMesh> meshes, Obji obji) {

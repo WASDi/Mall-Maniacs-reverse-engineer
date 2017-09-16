@@ -5,6 +5,7 @@ import senfile.parts.Mapi;
 import senfile.parts.Obji;
 import senfile.parts.Onam;
 import senfile.parts.Subo;
+import senfile.parts.Tani;
 import senfile.parts.Tnam;
 import senfile.parts.mesh.SenMesh;
 
@@ -22,8 +23,9 @@ public class SenFile {
     public final Cols cols;
     public final Tnam tnam;
     public final Onam onam;
+    public final Tani tani;
 
-    public SenFile(String title, int fileSize, List<SenMesh> meshes, Mapi mapi, Subo subo, Obji obji, Cols cols, Tnam tnam, Onam onam) {
+    public SenFile(String title, int fileSize, List<SenMesh> meshes, Mapi mapi, Subo subo, Obji obji, Cols cols, Tnam tnam, Onam onam, Tani tani) {
         this.title = title;
         this.fileSize = fileSize;
         this.meshes = meshes;
@@ -33,6 +35,7 @@ public class SenFile {
         this.cols = cols;
         this.tnam = tnam;
         this.onam = onam;
+        this.tani = tani;
     }
 
     public String getTitle() {

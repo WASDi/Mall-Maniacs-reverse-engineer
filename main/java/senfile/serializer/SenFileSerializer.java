@@ -35,6 +35,7 @@ public class SenFileSerializer {
         MapiSerializer.serializeMapi(senFile, buffer);
         SuboSerializer.serializeSubo(senFile, buffer);
         TnamSerializer.serializeTnam(senFile, buffer);
+        TaniSerializer.serializeTani(senFile, buffer);
         ObjiSerializer.serializeObji(senFile, buffer);
         OnamSerializer.serializeOnam(senFile, buffer);
 
