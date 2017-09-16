@@ -1,8 +1,11 @@
 package senfile;
 
+import senfile.parts.Cols;
 import senfile.parts.Mapi;
 import senfile.parts.Obji;
+import senfile.parts.Onam;
 import senfile.parts.Subo;
+import senfile.parts.Tnam;
 import senfile.parts.mesh.SenMesh;
 
 import java.util.List;
@@ -10,17 +13,26 @@ import java.util.List;
 public class SenFile {
 
     private final String title;
+    public final int fileSize;
     private final List<SenMesh> meshes;
     private final Mapi mapi;
     private final Subo subo;
     private final Obji obji;
 
-    public SenFile(String title, List<SenMesh> meshes, Mapi mapi, Subo subo, Obji obji) {
+    public final Cols cols;
+    public final Tnam tnam;
+    public final Onam onam;
+
+    public SenFile(String title, int fileSize, List<SenMesh> meshes, Mapi mapi, Subo subo, Obji obji, Cols cols, Tnam tnam, Onam onam) {
         this.title = title;
+        this.fileSize = fileSize;
         this.meshes = meshes;
         this.mapi = mapi;
         this.subo = subo;
         this.obji = obji;
+        this.cols = cols;
+        this.tnam = tnam;
+        this.onam = onam;
     }
 
     public String getTitle() {

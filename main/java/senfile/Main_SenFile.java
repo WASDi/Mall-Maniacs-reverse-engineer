@@ -21,8 +21,8 @@ public class Main_SenFile {
     public static void main(String[] args) throws Exception {
         long startTime = System.nanoTime();
 
-//        dumpOne();
-        dumpMany();
+        dumpOne();
+//        dumpMany();
 
 //        renderMesh("_1VONKEL");
 //        renderMesh("FLOTTY");
@@ -55,7 +55,7 @@ public class Main_SenFile {
     private static void dumpOne() throws IOException {
         String filePath = "/home/wasd/Downloads/Mall Maniacs/scene_ica/OBJECTS.SEN";
 //        filePath = "/home/wasd/Downloads/Mall Maniacs/menu/CHARACTERS.SEN";
-        filePath = "/home/wasd/Downloads/Mall Maniacs/scene_ica/MALL1_ICA.SEN";
+        filePath = GameMap.ICA.senFilePath;
 //        filePath = "/home/wasd/Downloads/Mall Maniacs/scene_aqua/AQUAMALL.SEN";
 
         List<SenFile> senFiles = getSingleSenFile(filePath);

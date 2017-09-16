@@ -7,7 +7,7 @@ import java.nio.ByteBuffer;
 
 public class MapiFactory {
 
-    private static final int BYTES_PER_MAPI_ELEMENT = 16;
+    public static final int BYTES_PER_MAPI_ELEMENT = 16;
 
     public static Mapi parseFromBufferPosition(ByteBuffer buffer) {
         int bytesLeft = buffer.getInt();

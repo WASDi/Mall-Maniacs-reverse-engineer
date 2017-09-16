@@ -7,9 +7,11 @@ import java.util.List;
  */
 public class Onam {
 
-    private final List<String> names;
+    public final List<String> names;
+    public final int sizeOfOnam;
 
-    public Onam(List<String> names) {
+    public Onam(List<String> names, int sizeOfOnam) {
         this.names = names;
+        this.sizeOfOnam = sizeOfOnam;
     }
 }

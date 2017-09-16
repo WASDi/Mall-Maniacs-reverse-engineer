@@ -65,7 +65,7 @@ public class SenFileFactory {
         if (rev2Header != HeaderTexts.REV2) {
             throw new IllegalArgumentException("Expected REV2 header but found " + rev2Header);
         }
-        int totalBytesLeft = buffer.getInt();
+        int fileSize = buffer.getInt();
 
         List<SenMesh> meshes = new ArrayList<>();
         Cols cols = null;
@@ -126,7 +126,7 @@ public class SenFileFactory {
 
 //        setMeshNamesForObji(meshes, obji);
 
-        return new SenFile(title, meshes, mapi, subo, obji);
+        return new SenFile(title, fileSize, meshes, mapi, subo, obji, cols, tnam, onam);
     }
 
     private static void setMeshNamesForObji(List<SenMesh> meshes, Obji obji) {
