@@ -11,7 +11,7 @@ public class SenFileSerializerMain {
         String phFilePath = "/home/wasd/Downloads/Mall Maniacs/scene_ica/PHMALL1_ICA.SEN";
 
         serializeFromOriginal(filePath);
-        serializeFromOriginal(phFilePath);
+//        serializeFromOriginal(phFilePath);
 
         long endTime = System.nanoTime();
         System.out.printf("\nCompleted in %.0fms\n", (endTime - startTime) / 1e6);

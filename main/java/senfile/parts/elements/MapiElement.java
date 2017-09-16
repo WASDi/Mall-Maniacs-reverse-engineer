@@ -5,7 +5,7 @@ package senfile.parts.elements;
  */
 public class MapiElement {
 
-    public final int mergedTpgFileIndex;
+    public final int tpgFileIndex;
     public final int isInPhFile; // 0 if true, 0x640000 if false
 
     //x1,y1  x2,y2  x3,y3  x4,y4
@@ -13,7 +13,7 @@ public class MapiElement {
 
     public MapiElement(int _1, int _2, byte[] textureCoordBytes) {
 
-        this.mergedTpgFileIndex = _1;
+        this.tpgFileIndex = _1;
         this.isInPhFile = _2;
         this.textureCoordBytes = textureCoordBytes;
     }

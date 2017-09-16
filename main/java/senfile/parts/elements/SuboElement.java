@@ -8,8 +8,8 @@ public class SuboElement {
 
     public final byte numFacesSigned;
     public final byte triangleOrQuad; // value = 3 or 4. TREAT SPECIALLY IF INHERENT TRIANGLE TO FIX RENDERING BUG !!!
-    public final byte _3; // constant for objects
-    public final byte alpha;
+    public final byte _3; // constant value 4 for objects?
+    public final byte transparency;
 
     public final short constant1; // == 0
     public final byte shortsPerFace;
@@ -27,7 +27,7 @@ public class SuboElement {
         numFacesSigned = buffer.get();
         triangleOrQuad = buffer.get();
         _3 = buffer.get();
-        alpha = buffer.get();
+        transparency = buffer.get();
 
         constant1 = buffer.getShort();
         shortsPerFace = buffer.get();
@@ -70,18 +70,28 @@ public class SuboElement {
         // for numRestShorts 1 = mapi index
         // for numRestShorts 2 = linear increment + mapi index
         // for numRestShorts 3 = linear increment + mapi index + zero
+        // ABOVE IS FALSE FOR TRANSPARENT FACES
         public final short[] restShorts;
+        public final short biggestRestShort;
 
         public FaceInfo(byte[] vertexIndices, short[] restShorts) {
             this.vertexIndices = vertexIndices;
             this.restShorts = restShorts;
+            this.biggestRestShort = getBiggestRestShort(restShorts);
         }
 
         public int getMapiIndex() {
-            if (restShorts.length == 1) {
-                return restShorts[0];
+            return biggestRestShort; // What are the other restShorts when not padding?
+        }
+
+        private static short getBiggestRestShort(short[] restShorts) {
+            short biggestRestShort = Short.MIN_VALUE;
+            for (short restShort : restShorts) {
+                if (restShort > biggestRestShort) {
+                    biggestRestShort = restShort;
+                }
             }
-            return restShorts[1];
+            return biggestRestShort;
         }
 
     }
