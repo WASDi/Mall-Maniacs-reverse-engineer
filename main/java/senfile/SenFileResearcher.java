@@ -21,6 +21,8 @@ public class SenFileResearcher {
     public static void main(String[] args) throws Exception {
         long startTime = System.nanoTime();
 
+//        SenFile senFile = SenFileFactory.getMap(GameMap.WOOD);
+
         dumpOne();
 //        dumpMany();
 
@@ -42,7 +44,7 @@ public class SenFileResearcher {
                 c -> null,
                 o -> null,
                 mapi -> null,
-                subo -> subo.triangleOrQuad,
+                subo -> null,
 //                subo -> String.format("%02X %02X %02X %02X",
 //                                      subo.rawBytes[4],
 //                                      subo.rawBytes[5],
@@ -55,7 +57,7 @@ public class SenFileResearcher {
     private static void dumpOne() throws IOException {
         String filePath = "/home/wasd/Downloads/Mall Maniacs/scene_ica/OBJECTS.SEN";
 //        filePath = "/home/wasd/Downloads/Mall Maniacs/menu/CHARACTERS.SEN";
-        filePath = GameMap.ICA.senFilePath;
+        filePath = GameMap.WOOD.senFilePath;
 //        filePath = "/home/wasd/Downloads/Mall Maniacs/scene_aqua/AQUAMALL.SEN";
 
         List<SenFile> senFiles = getSingleSenFile(filePath);

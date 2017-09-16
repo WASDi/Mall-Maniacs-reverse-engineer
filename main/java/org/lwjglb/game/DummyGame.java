@@ -83,6 +83,10 @@ public class DummyGame implements IGameLogic {
             float z = VertexTranslator.translateZ(obji.z);
 
             item.setPosition(x, y, z);
+            item.setRotation(VertexTranslator.translateRotation(obji.rotX),
+                             VertexTranslator.translateRotation(obji.rotY),
+                             VertexTranslator.translateRotation(obji.rotZ));
+
             gameItems.add(item);
             meshesToRenderPos.add(new Vector3f(x, y, z));
 

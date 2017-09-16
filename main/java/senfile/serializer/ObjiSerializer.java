@@ -21,8 +21,10 @@ public class ObjiSerializer {
             buffer.putFloat(element.x);
             buffer.putFloat(element.y);
             buffer.putFloat(element.z);
-            buffer.putInt(element._7);
-            buffer.putInt(element._8);
+            buffer.putShort(element.rotX);
+            buffer.putShort(element.rotY);
+            buffer.putShort(element.rotZ);
+            buffer.putShort(element.elementIdx);
         }
     }
 }
