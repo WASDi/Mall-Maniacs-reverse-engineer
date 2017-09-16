@@ -1,5 +1,7 @@
 package senfile.parts.elements;
 
+import senfile.Util;
+
 import java.nio.ByteBuffer;
 
 public class SuboElement {
@@ -16,6 +18,8 @@ public class SuboElement {
     public final FaceInfo[] faceInfos;
 
     private final int offset;
+
+    public String nameOfMesh;
 
     public SuboElement(ByteBuffer buffer, int offset) {
         this.offset = offset;
@@ -50,6 +54,14 @@ public class SuboElement {
 
     public int getOffset() {
         return offset;
+    }
+
+    public void setNameOfMesh(String nameOfMesh) {
+        this.nameOfMesh = nameOfMesh;
+    }
+
+    public boolean ignoreBecauseUnderline() {
+        return Util.ignoreBecauseUnderline(nameOfMesh);
     }
 
     public static final class FaceInfo {

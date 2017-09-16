@@ -1,7 +1,6 @@
 package senfile.statistics;
 
 import senfile.SenFile;
-import senfile.Util;
 import senfile.parts.elements.MapiElement;
 import senfile.parts.elements.ObjiElement;
 import senfile.parts.elements.SuboElement;
@@ -100,7 +99,7 @@ public class GroupedContentsDumper {
         Map<Object, List<FileMeshDesignator>> value2occurrences = new HashMap<>();
         for (SenFile senFile : senFiles) {
             for (SenMesh mesh : senFile.meshes) {
-                if (Util.IGNORE_UNDERLINES && mesh.name.charAt(0) == '_') {
+                if (mesh.ignoreBecauseUnderline()) {
                     continue;
                 }
                 Object valueOfInterest = valueOfInterestGetter.getFor(mesh);
@@ -121,6 +120,9 @@ public class GroupedContentsDumper {
                 occurrencesForValue.add(designator);
             }
             for (SuboElement element : senFile.subo.elements) {
+                if (element.ignoreBecauseUnderline()) {
+                    continue;
+                }
                 Object valueOfInterest;
                 try {
                     valueOfInterest = valueOfInterestGetter.forSubo.apply(element);
@@ -130,12 +132,12 @@ public class GroupedContentsDumper {
                 if (valueOfInterest == null) {
                     continue;
                 }
-                FileMeshDesignator designator = new FileMeshDesignator(senFile.title, "_SUBO_");
+                FileMeshDesignator designator = new FileMeshDesignator(senFile.title, element.nameOfMesh);
                 List<FileMeshDesignator> occurrencesForValue = value2occurrences.computeIfAbsent(valueOfInterest, x -> new ArrayList<>());
                 occurrencesForValue.add(designator);
             }
             for (ObjiElement element : senFile.obji.elements) {
-                if (Util.IGNORE_UNDERLINES && element.nameOfMesh.charAt(0) == '_') {
+                if (element.ignoreBecauseUnderline()) {
                     continue;
                 }
                 Object valueOfInterest = valueOfInterestGetter.forObji.apply(element);
