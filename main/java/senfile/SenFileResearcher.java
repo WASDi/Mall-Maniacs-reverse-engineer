@@ -12,11 +12,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 
-public class Main_SenFile {
+public class SenFileResearcher {
 
     private static ValueOfInterestGetter valueOfInterest = setupValueOfInterest();
 
-    private static final boolean VERBOSE_DUMP = !true;
+    private static final boolean VERBOSE_DUMP = true;
 
     public static void main(String[] args) throws Exception {
         long startTime = System.nanoTime();
@@ -42,7 +42,7 @@ public class Main_SenFile {
                 c -> null,
                 o -> null,
                 mapi -> null,
-                subo -> null,
+                subo -> subo.alpha,
 //                subo -> String.format("%02X %02X %02X %02X",
 //                                      subo.rawBytes[4],
 //                                      subo.rawBytes[5],

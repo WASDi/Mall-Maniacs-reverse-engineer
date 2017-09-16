@@ -7,7 +7,7 @@ public class SuboElement {
     public final byte numFacesSigned;
     public final byte _2_boolean;
     public final byte _3; // constant for objects
-    public final byte _4;
+    public final byte alpha;
 
     public final short constant1; // == 0
     public final byte shortsPerFace;
@@ -23,7 +23,7 @@ public class SuboElement {
         numFacesSigned = buffer.get();
         _2_boolean = buffer.get();
         _3 = buffer.get();
-        _4 = buffer.get();
+        alpha = buffer.get();
 
         constant1 = buffer.getShort();
         shortsPerFace = buffer.get();
