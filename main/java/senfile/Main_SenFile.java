@@ -48,7 +48,7 @@ public class Main_SenFile {
 //                                      subo.rawBytes[5],
 //                                      subo.rawBytes[6],
 //                                      subo.rawBytes[7]),
-                obji -> (obji.zRight & 0xFF00) >> 8
+                obji -> null
         );
     }
 

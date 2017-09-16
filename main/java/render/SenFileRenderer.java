@@ -49,7 +49,7 @@ public class SenFileRenderer {
     private int[] texture_MERGED = new int[NUM_MERGED_TPG_FILES];
 
     private final SenFile senFile;
-    private int meshIdx = 45;
+    private int meshIdx = 40;
 
     private final Movement movement = new Movement();
 
@@ -308,9 +308,9 @@ public class SenFileRenderer {
             }
 
             ObjiElement obji = senFile.getObji().elements[meshIdx];
-            modelMatrix.translation(SCALE * obji.xRight,
+            modelMatrix.translation(SCALE * obji.x,
                                     i * .3f,
-                                    SCALE * obji.zRight)
+                                    SCALE * obji.z)
                     .rotateY(angle * (float) Math.toRadians(90));
             glLoadMatrixf(viewMatrix.mul(modelMatrix, modelViewMatrix).get(fb));
             renderFromSenFile(i);
@@ -319,7 +319,8 @@ public class SenFileRenderer {
 
     public static void main(String[] args) {
 //        SenFile senFile = SenFileFactory.fromFile("/home/wasd/Downloads/Mall Maniacs/scene_aqua/OBJECTS.SEN");
-        SenFile senFile = SenFileFactory.fromFile("/home/wasd/Downloads/Mall Maniacs/scene_ica/MALL1_ICA.SEN");
+        SenFile senFile = SenFileFactory.fromFile("/home/wasd/Downloads/Mall Maniacs/scene_aqua/AQUAMALL.SEN");
+//        SenFile senFile = SenFileFactory.fromFile("/home/wasd/Downloads/Mall Maniacs/scene_ica/MALL1_ICA.SEN");
 //        SenFile senFile = SenFileFactory.fromFile("/home/wasd/Downloads/Mall Maniacs/scene_ica/CHARACTERS.SEN");
         new SenFileRenderer(senFile).run();
     }

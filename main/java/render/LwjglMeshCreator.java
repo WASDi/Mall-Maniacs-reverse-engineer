@@ -15,8 +15,6 @@ import java.util.List;
 
 public class LwjglMeshCreator {
 
-    private static final float SCALE = 1 / 3000f;
-
     public static Mesh crateMeshFromSenMesh(SenFile senFile, SenMesh mesh) {
 
         int[] suboOffsets = mesh.getSuboOffsets();
@@ -78,9 +76,9 @@ public class LwjglMeshCreator {
         private int indexOffset = 0;
 
         void putVertex(Vertex vertex, float textureX, float textureY) {
-            vertexFloats.add(vertex.x * -SCALE);
-            vertexFloats.add(vertex.y * -SCALE);
-            vertexFloats.add(vertex.z * SCALE);
+            vertexFloats.add(VertexTranslator.translateX(vertex.x));
+            vertexFloats.add(VertexTranslator.translateY(vertex.y));
+            vertexFloats.add(VertexTranslator.translateZ(vertex.z));
             textureFloats.add(textureX);
             textureFloats.add(textureY);
         }

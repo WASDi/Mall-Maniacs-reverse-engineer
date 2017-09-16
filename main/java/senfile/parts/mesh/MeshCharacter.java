@@ -68,8 +68,8 @@ public class MeshCharacter extends SenMesh {
 
     public Vertex[][] groupedVertices;
 
-    public MeshCharacter(String name, int[] rawData) {
-        super(name, rawData);
+    public MeshCharacter(String name, int meshIdx, int[] rawData) {
+        super(name, meshIdx, rawData);
         int idx = SHARED_DATA_SIZE;
         constant8 = rawData[idx++];
         constant9 = rawData[idx++];

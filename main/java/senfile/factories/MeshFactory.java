@@ -10,7 +10,7 @@ import java.nio.ByteBuffer;
 
 public class MeshFactory {
 
-    public static SenMesh parseFromBufferPosition(ByteBuffer buffer) {
+    public static SenMesh parseFromBufferPosition(int meshIdx, ByteBuffer buffer) {
         int bytesLeftUntilName = buffer.getInt();
         int nameOffset = buffer.position() + bytesLeftUntilName;
 
@@ -22,9 +22,9 @@ public class MeshFactory {
 
         String name = parseName(buffer, nameOffset);
         if (isCharacter(rawData)) {
-            return new MeshCharacter(name, rawData);
+            return new MeshCharacter(name, meshIdx, rawData);
         } else {
-            return new MeshObject(name, rawData);
+            return new MeshObject(name, meshIdx, rawData);
         }
     }
 

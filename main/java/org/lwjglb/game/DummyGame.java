@@ -9,8 +9,10 @@ import org.lwjglb.engine.Window;
 import org.lwjglb.engine.graph.Camera;
 import org.lwjglb.engine.graph.Mesh;
 import render.LwjglMeshCreator;
+import render.VertexTranslator;
 import senfile.SenFile;
 import senfile.factories.SenFileFactory;
+import senfile.parts.elements.ObjiElement;
 import senfile.parts.mesh.SenMesh;
 
 import java.util.ArrayList;
@@ -51,14 +53,14 @@ public class DummyGame implements IGameLogic {
 
 //        GL11.glEnable(GL11.GL_CULL_FACE);
 
-        addCube(0, 0, -2, TriCube.MESH);
-
-        addCube(0, 0, 1, TriCube.MESH);
-
-        addCube(-1, 0, 0, TriCube.MESH);
-        addCube(0, 1, 0, TriCube.MESH);
-        addCube(1, 0, 0, TriCube.MESH);
-        addCube(2, 0, 0, TriCube.MESH);
+//        addCube(0, 0, -2, TriCube.MESH);
+//
+//        addCube(0, 0, 1, TriCube.MESH);
+//
+//        addCube(-1, 0, 0, TriCube.MESH);
+//        addCube(0, 1, 0, TriCube.MESH);
+//        addCube(1, 0, 0, TriCube.MESH);
+//        addCube(2, 0, 0, TriCube.MESH);
 
 
         addAllTheThings();
@@ -67,6 +69,7 @@ public class DummyGame implements IGameLogic {
     private void addAllTheThings() {
 
         SenFile senFile = SenFileFactory.icaSingleton();
+//        SenFile senFile = SenFileFactory.aquaSingleton();
 
         List<SenMesh> meshes = senFile.getMeshes();
 
@@ -78,23 +81,16 @@ public class DummyGame implements IGameLogic {
             }
         }
 
-        int numMeshes = meshesToRender.size();
-        int cols = (int) Math.round(Math.sqrt(numMeshes));
-        int halfCols = cols / 2;
-        int spreadOut = 3;
-
-        for (int i = 0; i < numMeshes; i++) {
-            SenMesh mesh = meshesToRender.get(i);
-            int xIdx = i % cols;
-            int yIdx = i / cols;
+        for (SenMesh mesh : meshesToRender) {
+            ObjiElement obji = senFile.getObji().elements[mesh.meshIdx];
 
             GameItem item = new GameItem(LwjglMeshCreator.crateMeshFromSenMesh(senFile, mesh));
-            int x = spreadOut * (xIdx - halfCols);
-            int y = -2;
-            int z = spreadOut * (yIdx - halfCols);
-            item.setPosition(x,
-                             y,
-                             z);
+
+            float x = VertexTranslator.translateX(obji.x);
+            float y = VertexTranslator.translateY(obji.y);
+            float z = VertexTranslator.translateZ(obji.z);
+
+            item.setPosition(x, y, z);
             gameItems.add(item);
             meshesToRenderPos.add(new Vector3f(x, y, z));
 

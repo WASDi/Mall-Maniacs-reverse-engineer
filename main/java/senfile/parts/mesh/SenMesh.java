@@ -5,6 +5,7 @@ public abstract class SenMesh {
     protected static final int SHARED_DATA_SIZE = 12;
 
     public final String name;
+    public final int meshIdx;
 
     public final int constant1; // == 1
     public final int constant2; // == 1
@@ -24,8 +25,9 @@ public abstract class SenMesh {
     public final int constant7; // == 0
 
 
-    public SenMesh(String name, int[] rawData) {
+    public SenMesh(String name, int meshIdx, int[] rawData) {
         this.name = name;
+        this.meshIdx = meshIdx;
         int idx = 0;
         this.constant1 = rawData[idx++];
         this.constant2 = rawData[idx++];
@@ -39,8 +41,6 @@ public abstract class SenMesh {
         this.constant6 = rawData[idx++];
         this._11 = rawData[idx++];
         this.constant7 = rawData[idx++];
-
-//        System.out.println(name);
     }
 
     public boolean isUnderscore() {
