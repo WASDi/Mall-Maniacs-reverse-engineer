@@ -9,7 +9,7 @@ import java.nio.ByteBuffer;
 
 public class SuboSerializer {
     public static void serializeSubo(SenFile senFile, ByteBuffer buffer) {
-        Subo subo = senFile.getSubo();
+        Subo subo = senFile.subo;
 
         buffer.putInt(HeaderTexts.SUBO);
         buffer.putInt(subo.sizeOfSubo);

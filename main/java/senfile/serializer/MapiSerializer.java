@@ -10,7 +10,7 @@ import java.nio.ByteBuffer;
 
 public class MapiSerializer {
     public static void serializeMapi(SenFile senFile, ByteBuffer buffer) {
-        Mapi mapi = senFile.getMapi();
+        Mapi mapi = senFile.mapi;
 
         buffer.putInt(HeaderTexts.MAPI);
         buffer.putInt(MapiFactory.BYTES_PER_MAPI_ELEMENT * mapi.elements.length);

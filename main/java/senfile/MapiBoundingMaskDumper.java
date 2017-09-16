@@ -29,7 +29,7 @@ public class MapiBoundingMaskDumper {
         BufferedImage img = new BufferedImage(256, 256, BufferedImage.TYPE_INT_RGB);
         Graphics2D g2d = img.createGraphics();
         int numElementsDumped = 0;
-        for (MapiElement element : senFile.getMapi().elements) {
+        for (MapiElement element : senFile.mapi.elements) {
             if (element.mergedTpgFileIndex == tpgFileIndex) {
 
                 if(numElementsDumped == 5) {

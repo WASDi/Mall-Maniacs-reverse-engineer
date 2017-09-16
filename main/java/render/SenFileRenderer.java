@@ -96,10 +96,10 @@ public class SenFileRenderer {
                     glfwSetWindowShouldClose(window, true);
                 } else if (key == GLFW_KEY_LEFT && action == GLFW_PRESS) {
                     meshIdx--;
-                    glfwSetWindowTitle(window, "Mesh: " + meshIdx + " (" + senFile.getMeshes().get(meshIdx).name + ")");
+                    glfwSetWindowTitle(window, "Mesh: " + meshIdx + " (" + senFile.meshes.get(meshIdx).name + ")");
                 } else if (key == GLFW_KEY_RIGHT && action == GLFW_PRESS) {
                     meshIdx++;
-                    glfwSetWindowTitle(window, "Mesh: " + meshIdx + " (" + senFile.getMeshes().get(meshIdx).name + ")");
+                    glfwSetWindowTitle(window, "Mesh: " + meshIdx + " (" + senFile.meshes.get(meshIdx).name + ")");
                 } else if (action == GLFW_PRESS || action == GLFW_RELEASE) {
                     movement.handleMovement(key, action == GLFW_PRESS);
                 }
@@ -169,12 +169,12 @@ public class SenFileRenderer {
     }
 
     private void renderFromSenFile(int meshIdx) {
-        SenMesh mesh = senFile.getMeshes().get(meshIdx);
+        SenMesh mesh = senFile.meshes.get(meshIdx);
         int[] suboOffsets = mesh.getSuboOffsets();
         Vertex[] vertices = mesh.getVertices();
 
         for (int suboOffset : suboOffsets) {
-            SuboElement.FaceInfo[] faceInfos = senFile.getSubo().elementByOffset(suboOffset).faceInfos;
+            SuboElement.FaceInfo[] faceInfos = senFile.subo.elementByOffset(suboOffset).faceInfos;
 
             for (SuboElement.FaceInfo faceInfo : faceInfos) {
                 byte[] vertexIndices = faceInfo.vertexIndices;
@@ -184,7 +184,7 @@ public class SenFileRenderer {
                 int v3 = vertexIndices[3] & 0xFF;
 
                 int textureIndexForFace = faceInfo.getMapiIndex();
-                MapiElement mapiElement = senFile.getMapi().elements[textureIndexForFace];
+                MapiElement mapiElement = senFile.mapi.elements[textureIndexForFace];
                 int mergedTpgFileIndex = mapiElement.mergedTpgFileIndex;
                 byte[] coords = mapiElement.textureCoordBytes;
 
@@ -300,14 +300,14 @@ public class SenFileRenderer {
     }
 
     private void renderMany(float angle) {
-        List<SenMesh> meshes = senFile.getMeshes();
+        List<SenMesh> meshes = senFile.meshes;
         for (int i = 0; i < meshes.size(); i++) {
             String meshName = meshes.get(i).name;
             if (meshName.charAt(0) == '_' || !meshName.contains("LAMP")) {
                 continue;
             }
 
-            ObjiElement obji = senFile.getObji().elements[meshIdx];
+            ObjiElement obji = senFile.obji.elements[meshIdx];
             modelMatrix.translation(SCALE * obji.x,
                                     i * .3f,
                                     SCALE * obji.z)

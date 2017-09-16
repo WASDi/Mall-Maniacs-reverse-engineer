@@ -17,7 +17,7 @@ public class MeshSerializer {
 
     public static void serializeMeshes(SenFile senFile, ByteBuffer buffer) {
         SubMeshSerializer subMeshSerializer = new SubMeshSerializer(buffer);
-        for (SenMesh mesh : senFile.getMeshes()) {
+        for (SenMesh mesh : senFile.meshes) {
             buffer.putInt(HeaderTexts.MESH);
             buffer.putInt(mesh.bytesLeftUntilName);
             buffer.putInt(mesh.constant1);

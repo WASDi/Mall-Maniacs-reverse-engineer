@@ -23,7 +23,7 @@ public class LwjglMeshCreator {
         MeshBuilderFromQuad meshBuilderFromQuad = new MeshBuilderFromQuad();
 
         for (int suboOffset : suboOffsets) {
-            SuboElement suboElement = senFile.getSubo().elementByOffset(suboOffset);
+            SuboElement suboElement = senFile.subo.elementByOffset(suboOffset);
             SuboElement.FaceInfo[] faceInfos = suboElement.faceInfos;
             boolean isQuad = suboElement.isQuad();
 
@@ -35,7 +35,7 @@ public class LwjglMeshCreator {
                 int v3 = vertexIndices[3] & 0xFF;
 
                 int textureIndexForFace = faceInfo.getMapiIndex();
-                MapiElement mapiElement = senFile.getMapi().elements[textureIndexForFace];
+                MapiElement mapiElement = senFile.mapi.elements[textureIndexForFace];
                 int mergedTpgFileIndex = mapiElement.mergedTpgFileIndex;
                 byte[] coords = mapiElement.textureCoordBytes;
 

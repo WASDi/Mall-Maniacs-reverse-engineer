@@ -10,7 +10,7 @@ import java.nio.ByteBuffer;
 
 public class ObjiSerializer {
     public static void serializeObji(SenFile senFile, ByteBuffer buffer) {
-        Obji obji = senFile.getObji();
+        Obji obji = senFile.obji;
 
         buffer.putInt(HeaderTexts.OBJI);
         buffer.putInt(ObjiFactory.BYTES_PER_OBJI_ELEMENT * obji.elements.length);

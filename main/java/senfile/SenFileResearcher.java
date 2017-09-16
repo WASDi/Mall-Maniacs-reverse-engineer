@@ -66,10 +66,10 @@ public class SenFileResearcher {
         List<SenFile> senFiles = getAllSenFiles();
         Random r = new Random();
         SenFile senFile = senFiles.get(r.nextInt(senFiles.size()));
-        List<SenMesh> meshes = senFile.getMeshes();
+        List<SenMesh> meshes = senFile.meshes;
         SenMesh mesh = meshes.get(r.nextInt(meshes.size()));
 
-        System.out.println("Rendering mesh: " + mesh.name + " from " + senFile.getTitle());
+        System.out.println("Rendering mesh: " + mesh.name + " from " + senFile.title);
         RenderMesh.render(mesh, true);
     }
 
@@ -80,7 +80,7 @@ public class SenFileResearcher {
 
         Optional<SenMesh> meshOptional = senFiles
                 .stream()
-                .flatMap(senFile -> senFile.getMeshes().stream())
+                .flatMap(senFile -> senFile.meshes.stream())
                 .filter(mesh -> mesh.name.equals(nameToFind))
                 .findAny();
 
@@ -98,7 +98,7 @@ public class SenFileResearcher {
 
         SenFile firstSenFile = senFiles.get(0);
 //        firstSenFile.getMeshes().forEach(m -> System.out.println(m.name));
-        SuboElement suboElement = firstSenFile.getSubo().elements.get(0);
+        SuboElement suboElement = firstSenFile.subo.elements.get(0);
 
 //        for (SuboElement.FaceInfo faceInfo : suboElement.faceInfos) {
 //            byte[] vi = faceInfo.vertexIndices;

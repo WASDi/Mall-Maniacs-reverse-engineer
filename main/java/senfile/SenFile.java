@@ -13,13 +13,12 @@ import java.util.List;
 
 public class SenFile {
 
-    private final String title;
+    public final String title;
     public final int fileSize;
-    private final List<SenMesh> meshes;
-    private final Mapi mapi;
-    private final Subo subo;
-    private final Obji obji;
-
+    public final List<SenMesh> meshes;
+    public final Mapi mapi;
+    public final Subo subo;
+    public final Obji obji;
     public final Cols cols;
     public final Tnam tnam;
     public final Onam onam;
@@ -36,26 +35,6 @@ public class SenFile {
         this.tnam = tnam;
         this.onam = onam;
         this.tani = tani;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public List<SenMesh> getMeshes() {
-        return meshes;
-    }
-
-    public Mapi getMapi() {
-        return mapi;
-    }
-
-    public Subo getSubo() {
-        return subo;
-    }
-
-    public Obji getObji() {
-        return obji;
     }
 
     public void dumpInfo() {

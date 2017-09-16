@@ -58,18 +58,16 @@ public class DummyGame implements IGameLogic {
 
         SenFile senFile = SenFileFactory.getMap(GameMap.SELECTED_MAP);
 
-        List<SenMesh> meshes = senFile.getMeshes();
-
         meshesToRender = new ArrayList<>();
         meshesToRenderPos = new ArrayList<>();
-        for (SenMesh mesh : meshes) {
+        for (SenMesh mesh : senFile.meshes) {
             if (!mesh.isUnderscore()) {
                 meshesToRender.add(mesh);
             }
         }
 
         for (SenMesh mesh : meshesToRender) {
-            ObjiElement obji = senFile.getObji().elements[mesh.meshIdx];
+            ObjiElement obji = senFile.obji.elements[mesh.meshIdx];
 
             GameItem item;
             try {

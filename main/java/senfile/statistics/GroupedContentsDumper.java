@@ -99,7 +99,7 @@ public class GroupedContentsDumper {
                                                                               ValueOfInterestGetter valueOfInterestGetter) {
         Map<Object, List<FileMeshDesignator>> value2occurrences = new HashMap<>();
         for (SenFile senFile : senFiles) {
-            for (SenMesh mesh : senFile.getMeshes()) {
+            for (SenMesh mesh : senFile.meshes) {
                 if (Util.IGNORE_UNDERLINES && mesh.name.charAt(0) == '_') {
                     continue;
                 }
@@ -107,20 +107,20 @@ public class GroupedContentsDumper {
                 if (valueOfInterest == null) {
                     continue;
                 }
-                FileMeshDesignator designator = new FileMeshDesignator(senFile.getTitle(), mesh.name);
+                FileMeshDesignator designator = new FileMeshDesignator(senFile.title, mesh.name);
                 List<FileMeshDesignator> occurrencesForValue = value2occurrences.computeIfAbsent(valueOfInterest, x -> new ArrayList<>());
                 occurrencesForValue.add(designator);
             }
-            for (MapiElement mapiElement : senFile.getMapi().elements) {
+            for (MapiElement mapiElement : senFile.mapi.elements) {
                 Object valueOfInterest = valueOfInterestGetter.forMapi.apply(mapiElement);
                 if (valueOfInterest == null) {
                     continue;
                 }
-                FileMeshDesignator designator = new FileMeshDesignator(senFile.getTitle(), "_MAPI_");
+                FileMeshDesignator designator = new FileMeshDesignator(senFile.title, "_MAPI_");
                 List<FileMeshDesignator> occurrencesForValue = value2occurrences.computeIfAbsent(valueOfInterest, x -> new ArrayList<>());
                 occurrencesForValue.add(designator);
             }
-            for (SuboElement element : senFile.getSubo().elements) {
+            for (SuboElement element : senFile.subo.elements) {
                 Object valueOfInterest;
                 try {
                     valueOfInterest = valueOfInterestGetter.forSubo.apply(element);
@@ -130,11 +130,11 @@ public class GroupedContentsDumper {
                 if (valueOfInterest == null) {
                     continue;
                 }
-                FileMeshDesignator designator = new FileMeshDesignator(senFile.getTitle(), "_SUBO_");
+                FileMeshDesignator designator = new FileMeshDesignator(senFile.title, "_SUBO_");
                 List<FileMeshDesignator> occurrencesForValue = value2occurrences.computeIfAbsent(valueOfInterest, x -> new ArrayList<>());
                 occurrencesForValue.add(designator);
             }
-            for (ObjiElement element : senFile.getObji().elements) {
+            for (ObjiElement element : senFile.obji.elements) {
                 if (Util.IGNORE_UNDERLINES && element.nameOfMesh.charAt(0) == '_') {
                     continue;
                 }
@@ -142,7 +142,7 @@ public class GroupedContentsDumper {
                 if (valueOfInterest == null) {
                     continue;
                 }
-                FileMeshDesignator designator = new FileMeshDesignator(senFile.getTitle(), element.nameOfMesh);
+                FileMeshDesignator designator = new FileMeshDesignator(senFile.title, element.nameOfMesh);
                 List<FileMeshDesignator> occurrencesForValue = value2occurrences.computeIfAbsent(valueOfInterest, x -> new ArrayList<>());
                 occurrencesForValue.add(designator);
             }
