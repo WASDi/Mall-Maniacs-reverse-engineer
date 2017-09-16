@@ -1,6 +1,5 @@
 package senfile.serializer;
 
-import senfile.GameMap;
 import senfile.HeaderTexts;
 import senfile.SenFile;
 import senfile.factories.SenFileFactory;
@@ -14,7 +13,15 @@ import java.nio.channels.FileChannel;
 
 public class SenFileSerializer {
 
-    public static void serialize(SenFile senFile) {
+    private final String inputFile;
+
+    public SenFileSerializer(String inputFile) {
+        this.inputFile = inputFile;
+    }
+
+    public void serialize(String outputFile) {
+
+        SenFile senFile = SenFileFactory.fromFile(inputFile);
 
         int headerSizeInBytes = 8;
         ByteBuffer buffer = ByteBuffer.allocate(headerSizeInBytes + senFile.fileSize);
@@ -36,7 +43,7 @@ public class SenFileSerializer {
         }
 
         buffer.flip();
-        File file = new File("/tmp/OUT.SEN");
+        File file = new File(outputFile);
         FileChannel channel = null;
         try {
             channel = new FileOutputStream(file, false).getChannel();
@@ -57,12 +64,5 @@ public class SenFileSerializer {
     static int roundTo4WithMargin(int i) {
         return i - i % 4 + 4;
     }
-
-
-    public static void main(String[] args) {
-        SenFile senFile = SenFileFactory.getMap(GameMap.ICA);
-        serialize(senFile);
-    }
-
 
 }

@@ -15,5 +15,9 @@ public class TnamSerializer {
             }
             buffer.put((byte) 0);
         }
+
+        while (buffer.position() % 4 != 0) {
+            buffer.put((byte) 0); // padding
+        }
     }
 }
