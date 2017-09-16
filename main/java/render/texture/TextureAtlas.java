@@ -34,8 +34,8 @@ public class TextureAtlas {
                                                 TpgImage.BUFFERED_IMAGE_TYPE);
         Graphics atlasGraphics = atlas.getGraphics();
 
-        for (int idx = 0; idx < GameMap.SELECTED_MAP.numMergedTpgFiles; idx++) {
-            String filePath = String.format(GameMap.SELECTED_MAP.mergedTpgFilesFormat, idx);
+        for (int idx = 0; idx < GameMap.SELECTED_MAP.numTpgFiles; idx++) {
+            String filePath = String.format(GameMap.SELECTED_MAP.tpgFilesFormat, idx);
             TpgImage tpgImage = TpgImageFactory.fromFile(filePath);
             BufferedImage subImage = tpgImage.renderLazy();
 

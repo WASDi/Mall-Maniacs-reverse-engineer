@@ -1,25 +1,25 @@
 package senfile;
 
 public enum GameMap {
-    ICA("scene_ica", "MALL1_ICA.SEN", 32),
-    WOOD("scene_wood", "WOODMALL.SEN", 33),
-    ORIENT("scene_orient", "ORIENTMALL.SEN", 36),
-    AQUA("scene_aqua", "AQUAMALL.SEN", 33),
-    FUTURE("scene_future", "FUTUREMALL.SEN", 35);
+    ICA("scene_ica", "MALL1_ICA.SEN", 32, "MERGED"),
+    WOOD("scene_wood", "WOODMALL.SEN", 33, "MERGED"),
+    ORIENT("scene_orient", "ORIENTMALL.SEN", 24, "ORIENT"),
+    AQUA("scene_aqua", "AQUAMALL.SEN", 21, "AQUA"),
+    FUTURE("scene_future", "FUTUREMALL.SEN", 23, "FUT");
 
     private static final String ROOT_DIRECTORY = "/home/wasd/Downloads/Mall Maniacs/";
-    public static final GameMap SELECTED_MAP = ICA;
+    public static final GameMap SELECTED_MAP = FUTURE;
 
     public final String senFilePath;
-    public final String mergedTpgFilesFormat;
-    public final int numMergedTpgFiles;
+    public final String tpgFilesFormat;
+    public final int numTpgFiles;
 
-    GameMap(String subFolder, String senFile, int numMergedTpgFiles) {
+    GameMap(String subFolder, String senFile, int numTpgFiles, String tpgFilesPrefix) {
 
         String mapFolder = ROOT_DIRECTORY + subFolder + "/";
         senFilePath = mapFolder + senFile;
-        mergedTpgFilesFormat = mapFolder + "MERGED%02d.TPG";
+        tpgFilesFormat = mapFolder + tpgFilesPrefix + "%02d.TPG";
 
-        this.numMergedTpgFiles = numMergedTpgFiles;
+        this.numTpgFiles = numTpgFiles;
     }
 }
