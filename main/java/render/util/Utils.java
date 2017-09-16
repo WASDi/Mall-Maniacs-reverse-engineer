@@ -26,6 +26,8 @@ public class Utils {
         return array;
     }
 
+    private static final boolean BLACK_IS_ALPHA = true;
+
     public static ByteBuffer toByteBuffer(BufferedImage image) {
         if (image.getType() != BufferedImage.TYPE_INT_RGB) {
             throw new IllegalArgumentException("Must be BufferedImage.TYPE_INT_RGB");
@@ -38,10 +40,14 @@ public class Utils {
         for (int y = 0; y < image.getHeight(); y++) {
             for (int x = 0; x < image.getWidth(); x++) {
                 int pixel = pixels[y * image.getWidth() + x];
-                buffer.put((byte) ((pixel >> 16) & 0xFF));
-                buffer.put((byte) ((pixel >> 8) & 0xFF));
-                buffer.put((byte) (pixel & 0xFF));
-                buffer.put((byte) 255);
+                byte r = (byte) ((pixel >> 16) & 0xFF);
+                byte g = (byte) ((pixel >> 8) & 0xFF);
+                byte b = (byte) (pixel & 0xFF);
+                byte a = (byte) ((BLACK_IS_ALPHA && r == 0 && g == 0 && b == 0) ? 0 : 255);
+                buffer.put(r);
+                buffer.put(g);
+                buffer.put(b);
+                buffer.put(a);
             }
         }
         buffer.flip();

@@ -9,7 +9,7 @@ public class SuboElement {
     public final byte numFacesSigned;
     public final byte triangleOrQuad; // value = 3 or 4. TREAT SPECIALLY IF INHERENT TRIANGLE TO FIX RENDERING BUG !!!
     public final byte _3; // constant value 4 for objects?
-    public final byte transparency;
+    public final byte transparency; // Different values, does it mean order of rendering?
 
     public final short constant1; // == 0
     public final byte shortsPerFace;

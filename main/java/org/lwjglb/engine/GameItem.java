@@ -6,15 +6,17 @@ import org.lwjglb.engine.graph.Mesh;
 public class GameItem {
 
     private final Mesh mesh;
-    
+    public final int senMeshIdx;
+
     private final Vector3f position;
     
     private float scale;
 
     private final Vector3f rotation;
 
-    public GameItem(Mesh mesh) {
+    public GameItem(Mesh mesh, int senMeshIdx) {
         this.mesh = mesh;
+        this.senMeshIdx = senMeshIdx;
         position = new Vector3f(0, 0, 0);
         scale = 1;
         rotation = new Vector3f(0, 0, 0);
