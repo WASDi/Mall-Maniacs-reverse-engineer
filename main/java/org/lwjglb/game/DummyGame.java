@@ -18,7 +18,9 @@ import senfile.parts.elements.ObjiElement;
 import senfile.parts.mesh.SenMesh;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
@@ -53,7 +55,7 @@ public class DummyGame implements IGameLogic {
 
         SenFile senFile = SenFileFactory.getMap(GameMap.SELECTED_MAP);
         addAllTheThings(senFile);
-        sortGameItemsByTransparency(senFile);
+        sortGameItemsByTransparencyV2(senFile);
     }
 
     // Fixes this bug https://www.gamedev.net/forums/topic/184383-transparency-troubles/
@@ -77,6 +79,21 @@ public class DummyGame implements IGameLogic {
         gameItems.clear();
         gameItems.addAll(opaque);
         gameItems.addAll(transparent);
+    }
+
+    private void sortGameItemsByTransparencyV2(SenFile senFile) {
+        Map<Integer, Integer> meshIdx2transparency = new HashMap<>();
+        meshIdx2transparency.put(-1, -1000);
+
+        for (SenMesh mesh : senFile.meshes) {
+            meshIdx2transparency.put(mesh.meshIdx, Util.getTransparency(mesh, senFile));
+        }
+
+        gameItems.sort((o1, o2) -> {
+            int i1 = meshIdx2transparency.get(o1.senMeshIdx);
+            int i2 = meshIdx2transparency.get(o2.senMeshIdx);
+            return i1 - i2;
+        });
     }
 
     private void addAllTheThings(SenFile senFile) {

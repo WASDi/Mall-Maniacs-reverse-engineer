@@ -8,7 +8,7 @@ public enum GameMap {
     FUTURE("scene_future", "FUTUREMALL.SEN", 23, "FUT");
 
     private static final String ROOT_DIRECTORY = "/home/wasd/Downloads/Mall Maniacs/";
-    public static final GameMap SELECTED_MAP = AQUA;
+    public static final GameMap SELECTED_MAP = WOOD;
 
     public final String senFilePath;
     public final String tpgFilesFormat;
