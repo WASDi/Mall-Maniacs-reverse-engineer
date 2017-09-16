@@ -10,6 +10,7 @@ import org.lwjglb.engine.graph.Camera;
 import org.lwjglb.engine.graph.Mesh;
 import render.LwjglMeshCreator;
 import render.VertexTranslator;
+import senfile.GameMap;
 import senfile.SenFile;
 import senfile.factories.SenFileFactory;
 import senfile.parts.elements.ObjiElement;
@@ -68,8 +69,7 @@ public class DummyGame implements IGameLogic {
 
     private void addAllTheThings() {
 
-        SenFile senFile = SenFileFactory.icaSingleton();
-//        SenFile senFile = SenFileFactory.aquaSingleton();
+        SenFile senFile = SenFileFactory.getMap(GameMap.SELECTED_MAP);
 
         List<SenMesh> meshes = senFile.getMeshes();
 
