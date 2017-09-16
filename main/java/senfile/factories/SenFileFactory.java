@@ -1,5 +1,6 @@
 package senfile.factories;
 
+import senfile.GameMap;
 import senfile.HeaderTexts;
 import senfile.SenFile;
 import senfile.parts.Cols;
@@ -18,25 +19,16 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class SenFileFactory {
 
-    private static SenFile icaSingleton;
-    private static SenFile aquaSingleton;
+    private static final Map<GameMap, SenFile> SINGLETON_MAPS = new HashMap<>();
 
-    public static SenFile icaSingleton() {
-        if (icaSingleton == null) {
-            icaSingleton = fromFile("/home/wasd/Downloads/Mall Maniacs/scene_ica/MALL1_ICA.SEN");
-        }
-        return icaSingleton;
-    }
-
-    public static SenFile aquaSingleton() {
-        if (aquaSingleton == null) {
-            aquaSingleton = fromFile("/home/wasd/Downloads/Mall Maniacs/scene_aqua/AQUAMALL.SEN");
-        }
-        return aquaSingleton;
+    public static SenFile getMap(GameMap map) {
+        return SINGLETON_MAPS.computeIfAbsent(map, m -> fromFile(m.senFilePath));
     }
 
     public static SenFile fromFile(String filePath) {

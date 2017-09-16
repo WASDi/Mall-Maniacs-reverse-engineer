@@ -2,6 +2,7 @@ package render.texture;
 
 import org.lwjglb.engine.graph.Texture;
 import render.util.Utils;
+import senfile.GameMap;
 import tpgviewer.tpg.TpgImage;
 import tpgviewer.tpg.TpgImageFactory;
 
@@ -15,7 +16,6 @@ import static org.lwjgl.opengl.GL11.*;
 
 public class TextureAtlas {
 
-    private static final int NUM_MERGED_TPG_FILES = 32;
 
     public static final int SIZE_X = 6;
     public static final int SIZE_Y = 6;
@@ -34,8 +34,8 @@ public class TextureAtlas {
                                                 TpgImage.BUFFERED_IMAGE_TYPE);
         Graphics atlasGraphics = atlas.getGraphics();
 
-        for (int idx = 0; idx < NUM_MERGED_TPG_FILES; idx++) {
-            String filePath = String.format("/home/wasd/Downloads/Mall Maniacs/scene_ica/MERGED%02d.TPG", idx);
+        for (int idx = 0; idx < GameMap.SELECTED_MAP.numMergedTpgFiles; idx++) {
+            String filePath = String.format(GameMap.SELECTED_MAP.mergedTpgFilesFormat, idx);
             TpgImage tpgImage = TpgImageFactory.fromFile(filePath);
             BufferedImage subImage = tpgImage.renderLazy();
 
