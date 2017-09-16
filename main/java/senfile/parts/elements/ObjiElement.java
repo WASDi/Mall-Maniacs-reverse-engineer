@@ -1,7 +1,5 @@
 package senfile.parts.elements;
 
-import senfile.Util;
-
 import java.nio.ByteBuffer;
 
 /**
@@ -36,16 +34,28 @@ public class ObjiElement {
     }
 
     public void setNameOfMesh(String nameOfMesh) {
-        if (!Util.IGNORE_UNDERLINES || nameOfMesh.charAt(0) != '_') {
-            System.out.printf("%20s,   x ... %10.2f (%08X),   y ... %10.2f (%08X),   z ... %10.2f (%08X)\n",
-                              nameOfMesh,
-                              x, Float.floatToRawIntBits(x),
-                              y, Float.floatToRawIntBits(y),
-                              z, Float.floatToRawIntBits(z)
-            );
-        }
+//        if (!Util.IGNORE_UNDERLINES || nameOfMesh.charAt(0) != '_') {
+//            debugXYZ(nameOfMesh);
+//            debugOther(nameOfMesh);
+//        }
 
         this.nameOfMesh = nameOfMesh;
+    }
+
+    private void debugXYZ(String nameOfMesh) {
+        System.out.printf("%20s,   x ... %10.2f (%08X),   y ... %10.2f (%08X),   z ... %10.2f (%08X)\n",
+                          nameOfMesh,
+                          x, Float.floatToRawIntBits(x),
+                          y, Float.floatToRawIntBits(y),
+                          z, Float.floatToRawIntBits(z)
+        );
+    }
+
+    private void debugOther(String nameOfMesh) {
+        System.out.printf("%20s,  %8d (%08X)\n",
+                          nameOfMesh,
+                          _8, _8
+        );
     }
 
 }

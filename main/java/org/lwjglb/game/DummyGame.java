@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.lwjgl.glfw.GLFW.*;
+import static org.lwjgl.opengl.GL11.*;
 
 public class DummyGame implements IGameLogic {
 
@@ -69,6 +70,9 @@ public class DummyGame implements IGameLogic {
 
     private void addAllTheThings() {
 
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_FRONT);
+
         SenFile senFile = SenFileFactory.getMap(GameMap.SELECTED_MAP);
 
         List<SenMesh> meshes = senFile.getMeshes();
@@ -84,7 +88,14 @@ public class DummyGame implements IGameLogic {
         for (SenMesh mesh : meshesToRender) {
             ObjiElement obji = senFile.getObji().elements[mesh.meshIdx];
 
-            GameItem item = new GameItem(LwjglMeshCreator.crateMeshFromSenMesh(senFile, mesh));
+            GameItem item;
+            try {
+                item = new GameItem(LwjglMeshCreator.crateMeshFromSenMesh(senFile, mesh));
+            } catch (RuntimeException ex) {
+                meshesToRenderPos.add(new Vector3f(9999));
+                ex.printStackTrace();
+                continue;
+            }
 
             float x = VertexTranslator.translateX(obji.x);
             float y = VertexTranslator.translateY(obji.y);

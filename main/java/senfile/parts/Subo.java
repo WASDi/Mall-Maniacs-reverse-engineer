@@ -11,8 +11,11 @@ public class Subo {
     public final List<SuboElement> elements;
     public final Map<Integer, SuboElement> elementByOffset;
 
-    public Subo(List<SuboElement> elements) {
+    public final int sizeOfSubo;
+
+    public Subo(List<SuboElement> elements, int sizeOfSubo) {
         this.elements = elements;
+        this.sizeOfSubo = sizeOfSubo;
 
         elementByOffset = new HashMap<>();
         for (SuboElement element : elements) {

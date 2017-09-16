@@ -21,8 +21,8 @@ public class MeshObject extends SenMesh {
     public final int[] suboReferences;
     public final VertexGroupDefinition vertexGroup;
 
-    public MeshObject(String name, int meshIdx, int[] rawData) {
-        super(name, meshIdx, rawData);
+    public MeshObject(String name, int bytesLeftUntilName, int meshIdx, int[] rawData) {
+        super(name, bytesLeftUntilName, meshIdx, rawData);
         int idx = SHARED_DATA_SIZE;
         constant8 = rawData[idx++];
         constant9 = rawData[idx++];
@@ -58,6 +58,11 @@ public class MeshObject extends SenMesh {
     @Override
     public int[] getSuboOffsets() {
         return suboReferences;
+    }
+
+    @Override
+    public void visit(MeshVisitor visitor) {
+        visitor.visit(this);
     }
 
 }

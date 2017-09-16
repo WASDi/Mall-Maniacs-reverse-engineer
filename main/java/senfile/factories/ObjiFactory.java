@@ -2,13 +2,12 @@ package senfile.factories;
 
 import senfile.parts.Obji;
 import senfile.parts.elements.ObjiElement;
-import senfile.parts.elements.SuboElement;
 
 import java.nio.ByteBuffer;
 
 public class ObjiFactory {
 
-    private static final int BYTES_PER_OBJI_ELEMENT = 32;
+    public static final int BYTES_PER_OBJI_ELEMENT = 32;
 
     public static Obji parseFromBufferPosition(ByteBuffer buffer) {
         int bytesLeft = buffer.getInt();

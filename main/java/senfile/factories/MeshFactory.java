@@ -22,9 +22,9 @@ public class MeshFactory {
 
         String name = parseName(buffer, nameOffset);
         if (isCharacter(rawData)) {
-            return new MeshCharacter(name, meshIdx, rawData);
+            return new MeshCharacter(name, bytesLeftUntilName, meshIdx, rawData);
         } else {
-            return new MeshObject(name, meshIdx, rawData);
+            return new MeshObject(name, bytesLeftUntilName, meshIdx, rawData);
         }
     }
 

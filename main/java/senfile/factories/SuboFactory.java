@@ -29,7 +29,7 @@ public class SuboFactory {
             buffer.position(endPos);
         }
 
-        return new Subo(elements);
+        return new Subo(elements, bytesLeft);
     }
 
 }

@@ -3,28 +3,29 @@ package senfile.factories;
 import org.junit.Test;
 import senfile.parts.mesh.Vertex;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 public class VerticesFactoryTest {
+
+
     @Test
-    public void parseVertexV2() {
-
-//        System.out.printf("%32s\n",Integer.toBinaryString(0xFF));
-
+    public void testReverse() {
         int part1 = -17039150;
         int part2 = -2;
+        Vertex v = new Vertex(210, -260, -2);
 
-        Vertex vertex = VerticesFactory.parseVertex(part1, part2);
-        Vertex vertexV2 = VerticesFactory.parseVertexV2(part1, part2);
+        assertEquals(part1, VerticesFactory.reversePart1(v));
+        assertEquals(part2, VerticesFactory.reversePart2(v));
+    }
 
-        assertEquals(210, vertex.x);
-        assertEquals(252, vertex.y);
-        assertEquals(254, vertex.z);
+    @Test
+    public void testReverseWithNegatives() {
 
-        assertEquals(210, vertexV2.x);
-        assertEquals(-260, vertexV2.y);
-        assertEquals(-2, vertexV2.z);
+        int part1 = -196545464;
 
+        Vertex v = new Vertex(-3000, -3000, 0);
+
+        assertEquals(part1, VerticesFactory.reversePart1(v));
     }
 
     @Test

@@ -5,6 +5,7 @@ public abstract class SenMesh {
     protected static final int SHARED_DATA_SIZE = 12;
 
     public final String name;
+    public final int bytesLeftUntilName;
     public final int meshIdx;
 
     public final int constant1; // == 1
@@ -14,7 +15,7 @@ public abstract class SenMesh {
     public final int isCharacter2; // 172 (0xAC) if true, 52 (0x34) if false
     public final int isCharacter3; // 232 (0xE8) if true, 52 (0x34) if false
 
-    public final int _7; // value somewhat shared between similar meshes
+    public final int _7; // Delat värde mellan liknande mesh. Vid ändring försvinner rendering vid olika avstånd
 
     public final int constant4; // == 0
     public final int constant5; // == 0
@@ -25,8 +26,9 @@ public abstract class SenMesh {
     public final int constant7; // == 0
 
 
-    public SenMesh(String name, int meshIdx, int[] rawData) {
+    public SenMesh(String name, int bytesLeftUntilName, int meshIdx, int[] rawData) {
         this.name = name;
+        this.bytesLeftUntilName = bytesLeftUntilName;
         this.meshIdx = meshIdx;
         int idx = 0;
         this.constant1 = rawData[idx++];
@@ -50,4 +52,6 @@ public abstract class SenMesh {
     public abstract Vertex[] getVertices();
 
     public abstract int[] getSuboOffsets();
+
+    public abstract void visit(MeshVisitor visitor);
 }

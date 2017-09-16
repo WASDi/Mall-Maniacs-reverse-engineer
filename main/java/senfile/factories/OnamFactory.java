@@ -11,7 +11,7 @@ public class OnamFactory {
     public static Onam parseFromBufferPosition(ByteBuffer buffer) {
         int bytesLeft = buffer.getInt();
         List<String> names = Util.readNulSeparatedNames(buffer, bytesLeft);
-        return new Onam(names);
+        return new Onam(names, bytesLeft);
     }
 
 }

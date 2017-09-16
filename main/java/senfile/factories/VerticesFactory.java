@@ -16,20 +16,20 @@ public class VerticesFactory {
         return vertices;
     }
 
-    public static Vertex parseVertex(int part1, int part2) {
-        int x = part1 & 0xFF;
-        int y = (part1 >> 16) & 0xFF;
-        int z = part2 & 0xFF;
-
-        return new Vertex(x, y, z);
-    }
-
     public static Vertex parseVertexV2(int part1, int part2) {
         int x = (part1 << 16) >> 16;
         int y = part1 >> 16;
         int z = (part2 << 16) >> 16;
 
         return new Vertex(x, y, z);
+    }
+
+    public static int reversePart1(Vertex v) {
+        return (v.y << 16) | (v.x & 0xFFFF);
+    }
+
+    public static int reversePart2(Vertex v) {
+        return v.z | 0xFFFF0000;
     }
 
 }
