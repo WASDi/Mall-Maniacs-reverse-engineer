@@ -51,7 +51,9 @@ public class GroupedContentsDumper {
         for (Map.Entry<Object, List<FileMeshDesignator>> entry : value2occurrences.entrySet()) {
             Object value = entry.getKey();
             List<FileMeshDesignator> occurrences = entry.getValue();
-            if (value instanceof Number) {
+            if (value instanceof Float) {
+                System.out.printf("VALUE = %.2f (0x%X)\nOCCURRENCES = %d\n", value, Float.floatToRawIntBits((float) value), occurrences.size());
+            } else if (value instanceof Number) {
                 System.out.printf("VALUE = %d (0x%X)\nOCCURRENCES = %d\n", value, value, occurrences.size());
             } else {
                 System.out.printf("VALUE = %s\nOCCURRENCES = %d\n", value.toString(), occurrences.size());

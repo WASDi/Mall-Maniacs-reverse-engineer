@@ -2,9 +2,8 @@ package render;
 
 public class VertexTranslator {
 
-    // SenFiles use inverted X and Y
-
     private static final float SCALE = 1 / 1000f;
+    private static final float ROTATION_FACTOR = 180f / Short.MAX_VALUE;
 
     public static float translateX(float x) {
         return x * -SCALE;
@@ -18,4 +17,7 @@ public class VertexTranslator {
         return z * SCALE;
     }
 
+    public static float translateRotation(short rotation) {
+        return rotation * ROTATION_FACTOR;
+    }
 }
