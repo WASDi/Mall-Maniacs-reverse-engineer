@@ -23,12 +23,20 @@ import java.util.List;
 public class SenFileFactory {
 
     private static SenFile icaSingleton;
+    private static SenFile aquaSingleton;
 
     public static SenFile icaSingleton() {
         if (icaSingleton == null) {
             icaSingleton = fromFile("/home/wasd/Downloads/Mall Maniacs/scene_ica/MALL1_ICA.SEN");
         }
         return icaSingleton;
+    }
+
+    public static SenFile aquaSingleton() {
+        if (aquaSingleton == null) {
+            aquaSingleton = fromFile("/home/wasd/Downloads/Mall Maniacs/scene_aqua/AQUAMALL.SEN");
+        }
+        return aquaSingleton;
     }
 
     public static SenFile fromFile(String filePath) {
@@ -76,10 +84,12 @@ public class SenFileFactory {
         Obji obji = null;
         Onam onam = null;
 
+        int meshIdx = 0;
+
         while (buffer.hasRemaining()) {
             int header = buffer.getInt();
             if (header == HeaderTexts.MESH) {
-                SenMesh mesh = MeshFactory.parseFromBufferPosition(buffer);
+                SenMesh mesh = MeshFactory.parseFromBufferPosition(meshIdx++, buffer);
                 meshes.add(mesh);
             } else if (header == HeaderTexts.COLS) {
                 if (cols != null) {
@@ -122,7 +132,7 @@ public class SenFileFactory {
             }
         }
 
-        setMeshNamesForObji(meshes, obji);
+//        setMeshNamesForObji(meshes, obji);
 
         return new SenFile(title, meshes, mapi, subo, obji);
     }
@@ -136,10 +146,8 @@ public class SenFileFactory {
             return;
         }
 
-        for (int i = 0; i < meshes.size(); i++) {
-            SenMesh mesh = meshes.get(i);
-            ObjiElement objiElement = obji.elements[i];
-
+        for (SenMesh mesh : meshes) {
+            ObjiElement objiElement = obji.elements[mesh.meshIdx];
             objiElement.setNameOfMesh(mesh.name);
         }
     }
