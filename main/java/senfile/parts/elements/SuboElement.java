@@ -44,6 +44,10 @@ public class SuboElement {
         }
     }
 
+    public boolean isQuad() {
+        return triangleOrQuad == 4;
+    }
+
     public int getOffset() {
         return offset;
     }

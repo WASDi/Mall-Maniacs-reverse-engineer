@@ -23,7 +23,9 @@ public class LwjglMeshCreator {
         MeshBuilderFromQuad meshBuilderFromQuad = new MeshBuilderFromQuad();
 
         for (int suboOffset : suboOffsets) {
-            SuboElement.FaceInfo[] faceInfos = senFile.getSubo().elementByOffset(suboOffset).faceInfos;
+            SuboElement suboElement = senFile.getSubo().elementByOffset(suboOffset);
+            SuboElement.FaceInfo[] faceInfos = suboElement.faceInfos;
+            boolean isQuad = suboElement.isQuad();
 
             for (SuboElement.FaceInfo faceInfo : faceInfos) {
                 byte[] vertexIndices = faceInfo.vertexIndices;
@@ -60,10 +62,9 @@ public class LwjglMeshCreator {
                 meshBuilderFromQuad.putVertex(vertices[v1], v1tx, v1ty);
                 meshBuilderFromQuad.putVertex(vertices[v2], v2tx, v2ty);
                 meshBuilderFromQuad.putVertex(vertices[v3], v3tx, v3ty);
-                meshBuilderFromQuad.conjureTrianglesAfterQuadPut();
+                meshBuilderFromQuad.conjureTrianglesAfterQuadPut(isQuad);
             }
         }
-
 
         return meshBuilderFromQuad.build();
     }
@@ -83,16 +84,20 @@ public class LwjglMeshCreator {
             textureFloats.add(textureY);
         }
 
-        void conjureTrianglesAfterQuadPut() {
+        void conjureTrianglesAfterQuadPut(boolean isQuad) {
             int offset = 4 * indexOffset;
 
+            // Always add one triangle
             indices.add(offset);
             indices.add(offset + 1);
             indices.add(offset + 2);
 
-            indices.add(offset + 3);
-            indices.add(offset);
-            indices.add(offset + 2);
+            if (isQuad) {
+                // If quad, make two triangles to mimic quad
+                indices.add(offset + 3);
+                indices.add(offset);
+                indices.add(offset + 2);
+            }
 
             indexOffset++;
         }
@@ -104,7 +109,6 @@ public class LwjglMeshCreator {
 
 
             Texture texture = TextureAtlas.getSingletonTexture();
-//            Texture texture = MergedTpgTextureRepo.REPO.textureForMergedId(15);
             return new Mesh(positions, textCoords, indices, texture);
         }
     }
