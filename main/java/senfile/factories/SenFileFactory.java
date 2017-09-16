@@ -11,6 +11,7 @@ import senfile.parts.Subo;
 import senfile.parts.Tani;
 import senfile.parts.Tnam;
 import senfile.parts.elements.ObjiElement;
+import senfile.parts.elements.SuboElement;
 import senfile.parts.mesh.SenMesh;
 
 import java.io.IOException;
@@ -125,6 +126,7 @@ public class SenFileFactory {
         }
 
         setMeshNamesForObji(meshes, obji);
+        setMeshNamesForSubo(meshes, subo);
 
         return new SenFile(title, fileSize, meshes, mapi, subo, obji, cols, tnam, onam, tani);
     }
@@ -141,6 +143,19 @@ public class SenFileFactory {
         for (SenMesh mesh : meshes) {
             ObjiElement objiElement = obji.elements[mesh.meshIdx];
             objiElement.setNameOfMesh(mesh.name);
+        }
+    }
+
+    private static void setMeshNamesForSubo(List<SenMesh> meshes, Subo subo) {
+        for (SenMesh mesh : meshes) {
+            for (int suboOffset : mesh.getSuboOffsets()) {
+                SuboElement suboElement = subo.elementByOffset(suboOffset);
+                if (suboElement.nameOfMesh == null) {
+                    suboElement.setNameOfMesh(mesh.name);
+                } else {
+                    suboElement.nameOfMesh = suboElement.nameOfMesh + ", " + mesh.name;
+                }
+            }
         }
     }
 

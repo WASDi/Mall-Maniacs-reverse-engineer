@@ -61,7 +61,7 @@ public class DummyGame implements IGameLogic {
         meshesToRender = new ArrayList<>();
         meshesToRenderPos = new ArrayList<>();
         for (SenMesh mesh : senFile.meshes) {
-            if (!mesh.isUnderscore()) {
+            if (!mesh.ignoreBecauseUnderline()) {
                 meshesToRender.add(mesh);
             }
         }

@@ -10,7 +10,11 @@ import java.util.Set;
 
 public class Util {
 
-    public static final boolean IGNORE_UNDERLINES = true;
+    private static final boolean IGNORE_UNDERLINES = true;
+
+    public static boolean ignoreBecauseUnderline(String meshName) {
+        return Util.IGNORE_UNDERLINES && meshName.charAt(0) == '_';
+    }
 
     public static int getIndexOfNul(byte[] nameBytes) {
         for (int i = 0; i < nameBytes.length; i++) {

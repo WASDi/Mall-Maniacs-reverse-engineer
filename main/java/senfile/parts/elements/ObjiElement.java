@@ -1,5 +1,7 @@
 package senfile.parts.elements;
 
+import senfile.Util;
+
 import java.nio.ByteBuffer;
 
 /**
@@ -34,7 +36,7 @@ public class ObjiElement {
     }
 
     public void setNameOfMesh(String nameOfMesh) {
-//        if (!Util.IGNORE_UNDERLINES || nameOfMesh.charAt(0) != '_') {
+//        if (!ignoreBecauseUnderline()) {
 //            debugXYZ(nameOfMesh);
 //            debugOther(nameOfMesh);
 //        }
@@ -56,6 +58,10 @@ public class ObjiElement {
                           nameOfMesh,
                           _8, _8
         );
+    }
+
+    public boolean ignoreBecauseUnderline() {
+        return Util.ignoreBecauseUnderline(nameOfMesh);
     }
 
 }

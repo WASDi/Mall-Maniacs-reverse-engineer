@@ -1,5 +1,7 @@
 package senfile.parts.mesh;
 
+import senfile.Util;
+
 public abstract class SenMesh {
 
     protected static final int SHARED_DATA_SIZE = 12;
@@ -45,13 +47,13 @@ public abstract class SenMesh {
         this.constant7 = rawData[idx++];
     }
 
-    public boolean isUnderscore() {
-        return name.charAt(0) == '_';
-    }
-
     public abstract Vertex[] getVertices();
 
     public abstract int[] getSuboOffsets();
 
     public abstract void visit(MeshVisitor visitor);
+
+    public boolean ignoreBecauseUnderline() {
+        return Util.ignoreBecauseUnderline(name);
+    }
 }
