@@ -1,0 +1,3 @@
+Transparent items don't render, instead they render an incorrect texture
+
+Some items are incorrectly rotated
