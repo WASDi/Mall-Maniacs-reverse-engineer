@@ -5,7 +5,7 @@ import java.nio.ByteBuffer;
 public class SuboElement {
 
     public final byte numFacesSigned;
-    public final byte _2_boolean;
+    public final byte triangleOrQuad; // value = 3 or 4. TREAT SPECIALLY IF INHERENT TRIANGLE TO FIX RENDERING BUG !!!
     public final byte _3; // constant for objects
     public final byte alpha;
 
@@ -21,7 +21,7 @@ public class SuboElement {
         this.offset = offset;
 
         numFacesSigned = buffer.get();
-        _2_boolean = buffer.get();
+        triangleOrQuad = buffer.get();
         _3 = buffer.get();
         alpha = buffer.get();
 

@@ -42,7 +42,7 @@ public class SenFileResearcher {
                 c -> null,
                 o -> null,
                 mapi -> null,
-                subo -> subo.alpha,
+                subo -> subo.triangleOrQuad,
 //                subo -> String.format("%02X %02X %02X %02X",
 //                                      subo.rawBytes[4],
 //                                      subo.rawBytes[5],
