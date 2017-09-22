@@ -8,8 +8,10 @@ import org.lwjglb.engine.MouseInput;
 import org.lwjglb.engine.Window;
 import org.lwjglb.engine.graph.Camera;
 import org.lwjglb.engine.graph.Mesh;
+import org.lwjglb.engine.graph.Texture;
 import render.LwjglMeshCreator;
 import render.VertexTranslator;
+import render.texture.TextureAtlas;
 import senfile.GameMap;
 import senfile.SenFile;
 import senfile.Util;
@@ -72,12 +74,13 @@ public class DummyGame implements IGameLogic {
         }
 
         meshesToRenderPos = new ArrayList<>();
+        Texture textureAtlas = TextureAtlas.atlasFromTnam(senFile.tnam).toLwjglTexture();
         for (SenMesh mesh : meshesToRender) {
             ObjiElement obji = senFile.obji.elements[mesh.meshIdx];
 
             GameItem item;
             try {
-                item = new GameItem(LwjglMeshCreator.crateMeshFromSenMesh(senFile, mesh), mesh.meshIdx);
+                item = new GameItem(LwjglMeshCreator.crateMeshFromSenMesh(senFile, mesh, textureAtlas), mesh.meshIdx);
             } catch (RuntimeException ex) {
                 meshesToRenderPos.add(new Vector3f(9999));
                 System.err.println("Erroneous mesh: " + mesh.name);

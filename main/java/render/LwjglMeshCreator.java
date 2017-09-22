@@ -16,7 +16,7 @@ import java.util.List;
 
 public class LwjglMeshCreator {
 
-    public static Mesh crateMeshFromSenMesh(SenFile senFile, SenMesh mesh) {
+    public static Mesh crateMeshFromSenMesh(SenFile senFile, SenMesh mesh, Texture textureAtlas) {
 
         int[] suboOffsets = mesh.getSuboOffsets();
         Vertex[] vertices = mesh.getVertices();
@@ -71,7 +71,7 @@ public class LwjglMeshCreator {
             }
         }
 
-        return meshBuilderFromQuad.build();
+        return meshBuilderFromQuad.build(textureAtlas);
     }
 
     private static final class MeshBuilderFromQuad {
@@ -121,14 +121,12 @@ public class LwjglMeshCreator {
             }
         }
 
-        public Mesh build() {
+        public Mesh build(Texture textureAtlas) {
             float[] positions = Utils.floatListToArray(vertexFloats);
             float[] textCoords = Utils.floatListToArray(textureFloats);
             int[] indices = Utils.intListToArray(this.indices);
 
-
-            Texture texture = TextureAtlas.getSingletonTexture();
-            return new Mesh(positions, textCoords, indices, texture);
+            return new Mesh(positions, textCoords, indices, textureAtlas);
         }
     }
 }
