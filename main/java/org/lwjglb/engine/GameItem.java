@@ -9,7 +9,7 @@ public class GameItem {
     public final int senMeshIdx;
 
     private final Vector3f position;
-    
+
     private float scale;
 
     private final Vector3f rotation;

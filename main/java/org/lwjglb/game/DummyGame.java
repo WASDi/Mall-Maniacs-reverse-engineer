@@ -18,9 +18,7 @@ import senfile.parts.elements.ObjiElement;
 import senfile.parts.mesh.SenMesh;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
@@ -35,7 +33,7 @@ public class DummyGame implements IGameLogic {
 
     private final Camera camera;
 
-    private List<GameItem> gameItems = new ArrayList<>();
+    private GameItemContainer gameItemContainer = new GameItemContainer();
     private List<SenMesh> meshesToRender;
     private List<Vector3f> meshesToRenderPos;
 
@@ -53,53 +51,14 @@ public class DummyGame implements IGameLogic {
     public void init(Window window) throws Exception {
         renderer.init(window);
 
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_FRONT);
+
         SenFile senFile = SenFileFactory.getMap(GameMap.SELECTED_MAP);
         addAllTheThings(senFile);
-        sortGameItemsByTransparencyV2(senFile);
-    }
-
-    // Fixes this bug https://www.gamedev.net/forums/topic/184383-transparency-troubles/
-    private void sortGameItemsByTransparency(SenFile senFile) {
-        List<GameItem> opaque = new ArrayList<>(gameItems.size());
-        List<GameItem> transparent = new ArrayList<>(gameItems.size());
-
-        for (GameItem gameItem : gameItems) {
-            if (gameItem.senMeshIdx == -1) {
-                opaque.add(gameItem);
-                continue;
-            }
-            SenMesh senMesh = senFile.meshes.get(gameItem.senMeshIdx);
-            if (Util.hasTransparency(senMesh, senFile)) {
-                transparent.add(gameItem);
-            } else {
-                opaque.add(gameItem);
-            }
-        }
-
-        gameItems.clear();
-        gameItems.addAll(opaque);
-        gameItems.addAll(transparent);
-    }
-
-    private void sortGameItemsByTransparencyV2(SenFile senFile) {
-        Map<Integer, Integer> meshIdx2transparency = new HashMap<>();
-        meshIdx2transparency.put(-1, -1000);
-
-        for (SenMesh mesh : senFile.meshes) {
-            meshIdx2transparency.put(mesh.meshIdx, Util.getTransparency(mesh, senFile));
-        }
-
-        gameItems.sort((o1, o2) -> {
-            int i1 = meshIdx2transparency.get(o1.senMeshIdx);
-            int i2 = meshIdx2transparency.get(o2.senMeshIdx);
-            return i1 - i2;
-        });
     }
 
     private void addAllTheThings(SenFile senFile) {
-
-        glEnable(GL_CULL_FACE);
-        glCullFace(GL_FRONT);
 
         if (RENDER_UNDERSCORES) {
             meshesToRender = senFile.meshes;
@@ -135,7 +94,8 @@ public class DummyGame implements IGameLogic {
                              VertexTranslator.translateRotation(obji.rotY),
                              VertexTranslator.translateRotation(obji.rotZ));
 
-            gameItems.add(item);
+            boolean hasTransparency = Util.hasTransparency(mesh, senFile);
+            gameItemContainer.addGameItem(item, hasTransparency);
             meshesToRenderPos.add(new Vector3f(x, y, z));
 
             if (ADD_DEBUG_CUBES) {
@@ -148,7 +108,7 @@ public class DummyGame implements IGameLogic {
         GameItem item = new GameItem(mesh, -1);
         item.setScale(0.1f);
         item.setPosition(x, y, z);
-        gameItems.add(item);
+        gameItemContainer.addGameItem(item, false);
     }
 
     @Override
@@ -219,15 +179,14 @@ public class DummyGame implements IGameLogic {
 
     @Override
     public void render(Window window) {
-        renderer.render(window, camera, gameItems);
+        gameItemContainer.preRender(camera.getPosition());
+        renderer.render(window, camera, gameItemContainer);
     }
 
     @Override
     public void cleanup() {
         renderer.cleanup();
-        for (GameItem gameItem : gameItems) {
-            gameItem.getMesh().cleanUp();
-        }
+        gameItemContainer.cleanup();
     }
 
 }

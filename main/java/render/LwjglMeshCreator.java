@@ -7,6 +7,7 @@ import render.util.Utils;
 import senfile.SenFile;
 import senfile.parts.elements.MapiElement;
 import senfile.parts.elements.SuboElement;
+import senfile.parts.elements.SuboElementTransparencyMode;
 import senfile.parts.mesh.SenMesh;
 import senfile.parts.mesh.Vertex;
 
@@ -25,6 +26,7 @@ public class LwjglMeshCreator {
         for (int suboOffset : suboOffsets) {
             SuboElement suboElement = senFile.subo.elementByOffset(suboOffset);
             SuboElement.FaceInfo[] faceInfos = suboElement.faceInfos;
+            SuboElementTransparencyMode transparencyMode = suboElement.getTransparencyMode();
             boolean isQuad = suboElement.isQuad();
 
             for (SuboElement.FaceInfo faceInfo : faceInfos) {
@@ -63,6 +65,9 @@ public class LwjglMeshCreator {
                 meshBuilderFromQuad.putVertex(vertices[v2], v2tx, v2ty);
                 meshBuilderFromQuad.putVertex(vertices[v3], v3tx, v3ty);
                 meshBuilderFromQuad.conjureTrianglesAfterQuadPut(isQuad);
+                if (transparencyMode.mustMirrorSurface) {
+                    meshBuilderFromQuad.conjureReverseTrianglesAfterQuadPut(isQuad);
+                }
             }
         }
 
@@ -100,6 +105,20 @@ public class LwjglMeshCreator {
             }
 
             indexOffset++;
+        }
+
+        void conjureReverseTrianglesAfterQuadPut(boolean isQuad) {
+            int offset = 4 * indexOffset - 4; // minus 4 because repeat last ones
+
+            indices.add(offset);
+            indices.add(offset + 2);
+            indices.add(offset + 1);
+
+            if (isQuad) {
+                indices.add(offset + 3);
+                indices.add(offset + 2);
+                indices.add(offset);
+            }
         }
 
         public Mesh build() {
