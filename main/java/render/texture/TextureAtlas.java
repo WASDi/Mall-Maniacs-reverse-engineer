@@ -3,6 +3,8 @@ package render.texture;
 import org.lwjglb.engine.graph.Texture;
 import render.util.Utils;
 import senfile.GameMap;
+import senfile.factories.SenFileFactory;
+import senfile.parts.Tnam;
 import tpgviewer.tpg.TpgImage;
 import tpgviewer.tpg.TpgImageFactory;
 
@@ -16,42 +18,36 @@ import static org.lwjgl.opengl.GL11.*;
 
 public class TextureAtlas {
 
-
     public static final int SIZE_X = 6;
     public static final int SIZE_Y = 6;
 
     private final BufferedImage atlas;
 
-    private static Texture singletonTexture;
-
     private TextureAtlas(BufferedImage atlas) {
         this.atlas = atlas;
     }
 
-    private static TextureAtlas renderAtlas() {
+    public static TextureAtlas atlasFromTnam(Tnam tnam) {
+        if (tnam.names.size() > SIZE_X * SIZE_Y) {
+            throw new IllegalArgumentException("Atlas too small, " + SIZE_X + "x" + SIZE_Y);
+        }
         BufferedImage atlas = new BufferedImage(SIZE_X * TpgImage.SIZE,
                                                 SIZE_Y * TpgImage.SIZE,
                                                 TpgImage.BUFFERED_IMAGE_TYPE);
         Graphics atlasGraphics = atlas.getGraphics();
 
-        for (int idx = 0; idx < GameMap.SELECTED_MAP.numTpgFiles; idx++) {
-            String filePath = String.format(GameMap.SELECTED_MAP.tpgFilesFormat, idx);
+        int idx = 0;
+        for (String textureFile : tnam.names) {
+            String filePath = GameMap.SELECTED_MAP.senFileDirectory + textureFile + ".TPG";
             TpgImage tpgImage = TpgImageFactory.fromFile(filePath);
             BufferedImage subImage = tpgImage.renderLazy();
 
             int x = TpgImage.SIZE * (idx % SIZE_Y);
             int y = TpgImage.SIZE * (idx / SIZE_X);
             atlasGraphics.drawImage(subImage, x, y, null);
+            idx++;
         }
-
         return new TextureAtlas(atlas);
-    }
-
-    public static Texture getSingletonTexture() {
-        if (singletonTexture == null) {
-            singletonTexture = renderAtlas().toLwjglTexture();
-        }
-        return singletonTexture;
     }
 
     public Texture toLwjglTexture() {
@@ -78,7 +74,7 @@ public class TextureAtlas {
 
     public static void main(String[] args) throws Exception {
 
-        BufferedImage atlas = renderAtlas().atlas;
+        BufferedImage atlas = atlasFromTnam(SenFileFactory.getMap(GameMap.SELECTED_MAP).tnam).atlas;
 
         File outputFile = new File("/tmp/atlas.png");
         ImageIO.write(atlas, "png", outputFile);
