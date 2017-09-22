@@ -1,6 +1,7 @@
 package senfile;
 
 import senfile.parts.elements.SuboElement;
+import senfile.parts.elements.SuboElementTransparencyMode;
 import senfile.parts.mesh.SenMesh;
 
 import java.io.File;
@@ -71,28 +72,17 @@ public class Util {
         return names;
     }
 
-
     public static boolean hasTransparency(SenMesh mesh, SenFile senFile) {
         for (int suboOffset : mesh.getSuboOffsets()) {
             SuboElement subo = senFile.subo.elementByOffset(suboOffset);
             if (subo.transparency != 0) {
-//                System.out.println(mesh.name + ": " + subo.transparency);
-            }
-            if (subo.transparency == 64) {
-                return true;
+                SuboElementTransparencyMode transparencyMode = SuboElementTransparencyMode.resolveFromByte(subo.transparency);
+                if (transparencyMode.isTransparent) {
+                    return true;
+                }
             }
         }
         return false;
-    }
-
-    public static int getTransparency(SenMesh mesh, SenFile senFile) {
-        for (int suboOffset : mesh.getSuboOffsets()) {
-            SuboElement subo = senFile.subo.elementByOffset(suboOffset);
-            if (subo.transparency != 0) {
-                return subo.transparency;
-            }
-        }
-        return -1000;
     }
 
 

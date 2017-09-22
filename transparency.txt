@@ -1,0 +1,31 @@
+senfile.parts.elements.SuboElement.transparency
+The values are probably bit flags
+
+-----
+GameMap.WOOD
+0 = not transparent
+64 = Transparent, has front and back surfaces
+-64 = Needs to render/clone vertex to see from both sides (to not have to disable culling)
+
+16 = no effect? CENTER_TREE has both 16 and -64, FRUKT3 both 16 and 0
+-128 = only KASSA, has one small part that in game is rendered front and back (do like -64?). Also has value 0
+-----
+VALUE = 16 (0x10)
+CENTER_TREE
+FRUKT3
+-----
+VALUE = 64 (0x40)
+ENTREDOORS
+GRIND
+GRINDKASSA
+LIGHTPIPES
+SIGN_ICA100
+-----
+VALUE = -128 (0x80)
+KASSA
+-----
+VALUE = -64 (0xC0)
+CENTER_TREE
+DELIKATESS_W
+GALLER
+LIAN

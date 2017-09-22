@@ -8,7 +8,7 @@ import org.lwjglb.engine.graph.Camera;
 import org.lwjglb.engine.graph.ShaderProgram;
 import org.lwjglb.engine.graph.Transformation;
 
-import java.util.List;
+import java.util.function.Consumer;
 
 import static org.lwjgl.opengl.GL11.*;
 
@@ -37,7 +37,7 @@ public class Renderer {
         shaderProgram.createVertexShader(Utils.loadResource("/shaders/vertex.vs"));
         shaderProgram.createFragmentShader(Utils.loadResource("/shaders/fragment.fs"));
         shaderProgram.link();
-        
+
         // Create uniforms for modelView and projection matrices and texture
         shaderProgram.createUniform("projectionMatrix");
         shaderProgram.createUniform("modelViewMatrix");
@@ -48,34 +48,37 @@ public class Renderer {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 
-    public void render(Window window, Camera camera, List<GameItem> gameItems) {
+    public void render(Window window, Camera camera, GameItemContainer gameItems) {
         clear();
-        
-        if ( window.isResized() ) {
+
+        if (window.isResized()) {
             glViewport(0, 0, window.getWidth(), window.getHeight());
             window.setResized(false);
         }
 
         shaderProgram.bind();
-        
+
         // Update projection Matrix
         Matrix4f projectionMatrix = transformation.getProjectionMatrix(FOV, window.getWidth(), window.getHeight(), Z_NEAR, Z_FAR);
         shaderProgram.setUniform("projectionMatrix", projectionMatrix);
 
         // Update view Matrix
         Matrix4f viewMatrix = transformation.getViewMatrix(camera);
-        
+
         shaderProgram.setUniform("texture_sampler", 0);
         // Render each gameItem
-        for(GameItem gameItem : gameItems) {
-            // Set model view matrix for this item
-            Matrix4f modelViewMatrix = transformation.getModelViewMatrix(gameItem, viewMatrix);
-            shaderProgram.setUniform("modelViewMatrix", modelViewMatrix);
-            // Render the mes for this game item
-            gameItem.getMesh().render();
-        }
+        Consumer<GameItem> renderCallback = gameItem -> renderItem(gameItem, viewMatrix);
+        gameItems.render(renderCallback);
 
         shaderProgram.unbind();
+    }
+
+    private void renderItem(GameItem gameItem, Matrix4f viewMatrix) {
+        // Set model view matrix for this item
+        Matrix4f modelViewMatrix = transformation.getModelViewMatrix(gameItem, viewMatrix);
+        shaderProgram.setUniform("modelViewMatrix", modelViewMatrix);
+        // Render the mesh for this game item
+        gameItem.getMesh().render();
     }
 
     public void cleanup() {

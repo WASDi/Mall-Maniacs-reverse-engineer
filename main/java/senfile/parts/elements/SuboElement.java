@@ -52,6 +52,10 @@ public class SuboElement {
         return triangleOrQuad == 4;
     }
 
+    public SuboElementTransparencyMode getTransparencyMode() {
+        return SuboElementTransparencyMode.resolveFromByte(transparency);
+    }
+
     public int getOffset() {
         return offset;
     }
