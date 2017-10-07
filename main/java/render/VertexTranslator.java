@@ -1,5 +1,8 @@
 package render;
 
+import org.joml.Vector3f;
+import senfile.parts.mesh.Vertex;
+
 public class VertexTranslator {
 
     private static final float SCALE = 1 / 1000f;
@@ -15,6 +18,14 @@ public class VertexTranslator {
 
     public static float translateZ(float z) {
         return z * SCALE;
+    }
+
+    public static Vector3f translate(Vertex vertex) {
+        return new Vector3f(
+                VertexTranslator.translateX(vertex.x),
+                VertexTranslator.translateY(vertex.y),
+                VertexTranslator.translateZ(vertex.z)
+        );
     }
 
     public static float translateRotation(short rotation) {
