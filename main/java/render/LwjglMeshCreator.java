@@ -63,11 +63,16 @@ public class LwjglMeshCreator {
                 meshBuilderFromQuad.putVertex(vertices[v0], v0tx, v0ty);
                 meshBuilderFromQuad.putVertex(vertices[v1], v1tx, v1ty);
                 meshBuilderFromQuad.putVertex(vertices[v2], v2tx, v2ty);
-                meshBuilderFromQuad.putVertex(vertices[v3], v3tx, v3ty);
-                meshBuilderFromQuad.conjureTrianglesAfterQuadPut(isQuad);
-                if (transparencyMode.mustMirrorSurface) {
-                    meshBuilderFromQuad.conjureReverseTrianglesAfterQuadPut(isQuad);
+                if (isQuad) {
+                    meshBuilderFromQuad.putVertex(vertices[v3], v3tx, v3ty);
                 }
+
+                meshBuilderFromQuad.conjureTrianglesAfterVerticesPut(isQuad);
+                if (transparencyMode.mustMirrorSurface) {
+                    meshBuilderFromQuad.conjureReverseTrianglesAfterVerticesPut(isQuad);
+                }
+
+                meshBuilderFromQuad.incrementIndex(isQuad);
             }
         }
 
@@ -79,7 +84,7 @@ public class LwjglMeshCreator {
         private final List<Float> vertexFloats = new ArrayList<>();
         private final List<Float> textureFloats = new ArrayList<>();
         private final List<Integer> indices = new ArrayList<>();
-        private int indexOffset = 0;
+        private int offset = 0;
 
         void putVertex(Vertex vertex, float textureX, float textureY) {
             vertexFloats.add(VertexTranslator.translateX(vertex.x));
@@ -89,9 +94,7 @@ public class LwjglMeshCreator {
             textureFloats.add(textureY);
         }
 
-        void conjureTrianglesAfterQuadPut(boolean isQuad) {
-            int offset = 4 * indexOffset;
-
+        void conjureTrianglesAfterVerticesPut(boolean isQuad) {
             // Always add one triangle
             indices.add(offset);
             indices.add(offset + 1);
@@ -103,13 +106,9 @@ public class LwjglMeshCreator {
                 indices.add(offset);
                 indices.add(offset + 2);
             }
-
-            indexOffset++;
         }
 
-        void conjureReverseTrianglesAfterQuadPut(boolean isQuad) {
-            int offset = 4 * indexOffset - 4; // minus 4 because repeat last ones
-
+        void conjureReverseTrianglesAfterVerticesPut(boolean isQuad) {
             indices.add(offset);
             indices.add(offset + 2);
             indices.add(offset + 1);
@@ -127,6 +126,10 @@ public class LwjglMeshCreator {
             int[] indices = Utils.intListToArray(this.indices);
 
             return new Mesh(positions, textCoords, indices, textureAtlas);
+        }
+
+        public void incrementIndex(boolean isQuad) {
+            offset += isQuad ? 4 : 3;
         }
     }
 }
