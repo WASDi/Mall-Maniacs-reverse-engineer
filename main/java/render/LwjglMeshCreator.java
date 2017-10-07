@@ -1,5 +1,6 @@
 package render;
 
+import org.joml.Vector3f;
 import org.lwjglb.engine.graph.Mesh;
 import org.lwjglb.engine.graph.Texture;
 import render.texture.TextureAtlas;
@@ -60,15 +61,23 @@ public class LwjglMeshCreator {
                 float v3tx = xOffset + (coords[6] & 0xFF) / divX;
                 float v3ty = yOffset + (coords[7] & 0xFF) / divY;
 
+                Vector3f normal = NormalCalculator.calculate(vertices[v0], vertices[v1], vertices[v2]);
+
                 meshBuilder.putVertex(vertices[v0], v0tx, v0ty);
                 meshBuilder.putVertex(vertices[v1], v1tx, v1ty);
                 meshBuilder.putVertex(vertices[v2], v2tx, v2ty);
+                meshBuilder.putNormal(normal);
+                meshBuilder.putNormal(normal);
+                meshBuilder.putNormal(normal);
+
                 if (isQuad) {
                     meshBuilder.putVertex(vertices[v3], v3tx, v3ty);
+                    meshBuilder.putNormal(normal);
                 }
 
                 meshBuilder.conjureTrianglesAfterVerticesPut(isQuad);
                 if (transparencyMode.mustMirrorSurface) {
+                    // TODO incorrect normal, need to duplicate vertices to fix
                     meshBuilder.conjureReverseTrianglesAfterVerticesPut(isQuad);
                 }
 
@@ -83,6 +92,7 @@ public class LwjglMeshCreator {
 
         private final List<Float> vertexFloats = new ArrayList<>();
         private final List<Float> textureFloats = new ArrayList<>();
+        private final List<Float> normalFloats = new ArrayList<>();
         private final List<Integer> indices = new ArrayList<>();
         private int offset = 0;
 
@@ -92,6 +102,12 @@ public class LwjglMeshCreator {
             vertexFloats.add(VertexTranslator.translateZ(vertex.z));
             textureFloats.add(textureX);
             textureFloats.add(textureY);
+        }
+
+        public void putNormal(Vector3f normal) {
+            normalFloats.add(normal.x);
+            normalFloats.add(normal.y);
+            normalFloats.add(normal.z);
         }
 
         void conjureTrianglesAfterVerticesPut(boolean isQuad) {
@@ -123,9 +139,10 @@ public class LwjglMeshCreator {
         public Mesh build(Texture textureAtlas) {
             float[] positions = Utils.floatListToArray(vertexFloats);
             float[] textCoords = Utils.floatListToArray(textureFloats);
+            float[] normals = Utils.floatListToArray(normalFloats);
             int[] indices = Utils.intListToArray(this.indices);
 
-            return new Mesh(positions, textCoords, indices, textureAtlas);
+            return new Mesh(positions, textCoords, normals, indices, textureAtlas);
         }
 
         public void incrementIndex(boolean isQuad) {

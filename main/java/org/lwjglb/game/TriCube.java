@@ -7,9 +7,16 @@ import java.io.IOException;
 
 public class TriCube {
 
-    public static final Mesh MESH = createOriginalTriMesh();
+    private static Mesh mesh;
 
     private TriCube() {
+    }
+
+    public static synchronized Mesh getMesh() {
+        if (mesh == null) {
+            mesh = createOriginalTriMesh();
+        }
+        return mesh;
     }
 
     private static Mesh createOriginalTriMesh() {
@@ -106,7 +113,7 @@ public class TriCube {
             System.exit(-1);
             return null;
         }
-        return new Mesh(positions, textCoords, indices, texture);
+        return new Mesh(positions, textCoords, null, indices, texture);
     }
 
 }
