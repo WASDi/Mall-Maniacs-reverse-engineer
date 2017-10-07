@@ -39,7 +39,7 @@ public class DummyGame implements IGameLogic {
     private List<SenMesh> meshesToRender;
     private List<Vector3f> meshesToRenderPos;
 
-    private static final float CAMERA_POS_STEP = 0.1f;
+    private static final float CAMERA_POS_STEP = 0.2f;
     private static final boolean ADD_DEBUG_CUBES = false;
     private static final boolean RENDER_UNDERSCORES = false;
 
@@ -89,7 +89,7 @@ public class DummyGame implements IGameLogic {
             }
 
             float x = VertexTranslator.translateX(obji.x);
-            float y = VertexTranslator.translateY(obji.y) + (mesh.ignoreBecauseUnderline() ? -10 : 0);
+            float y = VertexTranslator.translateY(obji.y);
             float z = VertexTranslator.translateZ(obji.z);
 
             item.setPosition(x, y, z);
@@ -140,7 +140,8 @@ public class DummyGame implements IGameLogic {
         if (window.isKeyPressed(GLFW_KEY_Y)) {
             if (noPressY) {
                 noPressY = false;
-                debugClosestItem();
+                //debugClosestItem();
+                lightPosition.set(camera.getPosition());
             }
         } else {
             noPressY = true;
@@ -149,6 +150,8 @@ public class DummyGame implements IGameLogic {
     }
 
     boolean noPressY = true;
+
+    public static Vector3f lightPosition = new Vector3f();
 
     private void debugClosestItem() {
         Vector3f myPos = camera.getPosition();
