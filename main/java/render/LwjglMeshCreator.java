@@ -21,7 +21,7 @@ public class LwjglMeshCreator {
         int[] suboOffsets = mesh.getSuboOffsets();
         Vertex[] vertices = mesh.getVertices();
 
-        MeshBuilderFromQuad meshBuilderFromQuad = new MeshBuilderFromQuad();
+        MeshBuilder meshBuilder = new MeshBuilder();
 
         for (int suboOffset : suboOffsets) {
             SuboElement suboElement = senFile.subo.elementByOffset(suboOffset);
@@ -60,26 +60,26 @@ public class LwjglMeshCreator {
                 float v3tx = xOffset + (coords[6] & 0xFF) / divX;
                 float v3ty = yOffset + (coords[7] & 0xFF) / divY;
 
-                meshBuilderFromQuad.putVertex(vertices[v0], v0tx, v0ty);
-                meshBuilderFromQuad.putVertex(vertices[v1], v1tx, v1ty);
-                meshBuilderFromQuad.putVertex(vertices[v2], v2tx, v2ty);
+                meshBuilder.putVertex(vertices[v0], v0tx, v0ty);
+                meshBuilder.putVertex(vertices[v1], v1tx, v1ty);
+                meshBuilder.putVertex(vertices[v2], v2tx, v2ty);
                 if (isQuad) {
-                    meshBuilderFromQuad.putVertex(vertices[v3], v3tx, v3ty);
+                    meshBuilder.putVertex(vertices[v3], v3tx, v3ty);
                 }
 
-                meshBuilderFromQuad.conjureTrianglesAfterVerticesPut(isQuad);
+                meshBuilder.conjureTrianglesAfterVerticesPut(isQuad);
                 if (transparencyMode.mustMirrorSurface) {
-                    meshBuilderFromQuad.conjureReverseTrianglesAfterVerticesPut(isQuad);
+                    meshBuilder.conjureReverseTrianglesAfterVerticesPut(isQuad);
                 }
 
-                meshBuilderFromQuad.incrementIndex(isQuad);
+                meshBuilder.incrementIndex(isQuad);
             }
         }
 
-        return meshBuilderFromQuad.build(textureAtlas);
+        return meshBuilder.build(textureAtlas);
     }
 
-    private static final class MeshBuilderFromQuad {
+    private static final class MeshBuilder {
 
         private final List<Float> vertexFloats = new ArrayList<>();
         private final List<Float> textureFloats = new ArrayList<>();
