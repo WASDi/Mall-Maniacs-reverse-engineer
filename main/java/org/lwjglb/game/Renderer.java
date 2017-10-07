@@ -40,7 +40,8 @@ public class Renderer {
 
         // Create uniforms for modelView and projection matrices and texture
         shaderProgram.createUniform("projectionMatrix");
-        shaderProgram.createUniform("modelViewMatrix");
+        shaderProgram.createUniform("viewMatrix");
+        shaderProgram.createUniform("modelMatrix");
         shaderProgram.createUniform("texture_sampler");
     }
 
@@ -64,6 +65,7 @@ public class Renderer {
 
         // Update view Matrix
         Matrix4f viewMatrix = transformation.getViewMatrix(camera);
+        shaderProgram.setUniform("viewMatrix", viewMatrix);
 
         shaderProgram.setUniform("texture_sampler", 0);
         // Render each gameItem
@@ -75,8 +77,9 @@ public class Renderer {
 
     private void renderItem(GameItem gameItem, Matrix4f viewMatrix) {
         // Set model view matrix for this item
-        Matrix4f modelViewMatrix = transformation.getModelViewMatrix(gameItem, viewMatrix);
-        shaderProgram.setUniform("modelViewMatrix", modelViewMatrix);
+        //Matrix4f modelViewMatrix = transformation.getModelViewMatrix(gameItem, viewMatrix);
+        Matrix4f modelMatrix = transformation.getModelMatrix(gameItem);
+        shaderProgram.setUniform("modelMatrix", modelMatrix);
         // Render the mesh for this game item
         gameItem.getMesh().render();
     }

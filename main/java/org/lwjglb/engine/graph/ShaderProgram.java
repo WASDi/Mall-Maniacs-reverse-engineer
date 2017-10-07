@@ -1,11 +1,14 @@
 package org.lwjglb.engine.graph;
 
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
+import org.lwjgl.system.MemoryStack;
+
 import java.nio.FloatBuffer;
 import java.util.HashMap;
 import java.util.Map;
-import org.joml.Matrix4f;
+
 import static org.lwjgl.opengl.GL20.*;
-import org.lwjgl.system.MemoryStack;
 
 public class ShaderProgram {
 
@@ -44,6 +47,10 @@ public class ShaderProgram {
 
     public void setUniform(String uniformName, int value) {
         glUniform1i(uniforms.get(uniformName), value);
+    }
+
+    public void setUniform(String uniformName, Vector3f value) {
+        glUniform3f(uniforms.get(uniformName), value.x, value.y, value.z);
     }
 
     public void createVertexShader(String shaderCode) throws Exception {

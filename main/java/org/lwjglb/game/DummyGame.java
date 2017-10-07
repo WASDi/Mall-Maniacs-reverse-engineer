@@ -102,7 +102,7 @@ public class DummyGame implements IGameLogic {
             meshesToRenderPos.add(new Vector3f(x, y, z));
 
             if (ADD_DEBUG_CUBES) {
-                addCube(x, y, z, TriCube.MESH);
+                addCube(x, y, z, TriCube.getMesh());
             }
         }
     }
