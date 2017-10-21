@@ -6,12 +6,16 @@ layout (location=2) in vec3 normal;
 
 out vec2 outTexCoord;
 out vec3 surfaceNormal;
-out vec3 deltaLightPos;
+out vec3 lightDirection;
+out vec3 lightReflection;
+out vec3 cameraDirection;
 
 uniform mat4 modelMatrix;
 uniform mat4 viewMatrix;
 uniform mat4 projectionMatrix;
+
 uniform vec3 lightPosition;
+uniform vec3 cameraPosition;
 
 void main()
 {
@@ -19,6 +23,11 @@ void main()
     gl_Position = projectionMatrix * viewMatrix * worldPosition;
     outTexCoord = texCoord;
 
-    surfaceNormal = (modelMatrix * vec4(normal, 0.0)).xyz;
-    deltaLightPos = lightPosition - worldPosition.xyz;
+    // These will be a bit wrong? Because they are calculated per vertex, being interpolated and no longer normalized.
+    surfaceNormal = normalize((modelMatrix * vec4(normal, 0.0)).xyz);
+
+    lightDirection = normalize(lightPosition - worldPosition.xyz);
+    lightReflection = reflect(lightDirection, surfaceNormal);
+
+    cameraDirection = normalize(worldPosition.xyz - cameraPosition);
 }
