@@ -2,21 +2,24 @@
 
 in vec2 outTexCoord;
 in vec3 surfaceNormal;
-in vec3 deltaLightPos;
+in vec3 lightDirection;
+in vec3 lightReflection;
+in vec3 cameraDirection;
 
 out vec4 fragColor;
 
 uniform sampler2D texture_sampler;
 
-float ambientLight = 0.3;
+float ambient = 0.3;
 
 void main()
 {
-    vec3 unitNormal = normalize(surfaceNormal);
-    vec3 unitLightVector = normalize(deltaLightPos);
+    float diffuse = max(0.0, dot(surfaceNormal, lightDirection));
 
-    float nDot1 = dot(unitNormal, unitLightVector);
-    float brightness = max(nDot1, ambientLight);
+    float specularFactor = max(0.0, dot(cameraDirection, lightReflection));
+    float specular = 0.8 * pow(specularFactor, 8.0);
+
+    float brightness = ambient + diffuse + specular;
 
     vec4 color = texture(texture_sampler, outTexCoord);
     fragColor = vec4(color.xyz * brightness, color.w);

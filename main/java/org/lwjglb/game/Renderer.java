@@ -43,6 +43,7 @@ public class Renderer {
         shaderProgram.createUniform("viewMatrix");
         shaderProgram.createUniform("modelMatrix");
         shaderProgram.createUniform("lightPosition");
+        shaderProgram.createUniform("cameraPosition");
         shaderProgram.createUniform("texture_sampler");
     }
 
@@ -66,6 +67,7 @@ public class Renderer {
 
         //Vector3f lightPosition = new Vector3f(camera.getPosition()).add(0, 0, 0);
         shaderProgram.setUniform("lightPosition", DummyGame.lightPosition);
+        shaderProgram.setUniform("cameraPosition", camera.getPosition());
 
         // Update view Matrix
         Matrix4f viewMatrix = transformation.getViewMatrix(camera);
