@@ -8,6 +8,7 @@ import org.lwjgl.glfw.GLFWKeyCallback;
 import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
 import senfile.SenFile;
+import senfile.Util;
 import senfile.factories.SenFileFactory;
 import senfile.parts.elements.MapiElement;
 import senfile.parts.elements.ObjiElement;
@@ -49,7 +50,7 @@ public class SenFileRenderer {
     private int[] texture_MERGED = new int[NUM_MERGED_TPG_FILES];
 
     private final SenFile senFile;
-    private int meshIdx = 40;
+    private int meshIdx = 14;
 
     private final Movement movement = new Movement();
 
@@ -96,9 +97,15 @@ public class SenFileRenderer {
                     glfwSetWindowShouldClose(window, true);
                 } else if (key == GLFW_KEY_LEFT && action == GLFW_PRESS) {
                     meshIdx--;
+                    if (meshIdx < 0) {
+                        meshIdx = senFile.meshes.size() - 1;
+                    }
                     glfwSetWindowTitle(window, "Mesh: " + meshIdx + " (" + senFile.meshes.get(meshIdx).name + ")");
                 } else if (key == GLFW_KEY_RIGHT && action == GLFW_PRESS) {
                     meshIdx++;
+                    if (meshIdx >= senFile.meshes.size()) {
+                        meshIdx = 0;
+                    }
                     glfwSetWindowTitle(window, "Mesh: " + meshIdx + " (" + senFile.meshes.get(meshIdx).name + ")");
                 } else if (action == GLFW_PRESS || action == GLFW_RELEASE) {
                     movement.handleMovement(key, action == GLFW_PRESS);
@@ -148,7 +155,7 @@ public class SenFileRenderer {
     }
 
     private void initMergedTpgTexture(int idx) {
-        String filePath = String.format("/home/wasd/Downloads/Mall Maniacs/scene_ica/MERGED%02d.TPG", idx);
+        String filePath = String.format(Util.ROOT_DIR + "scene_ica/MERGED%02d.TPG", idx);
         TpgImage tpgImage = TpgImageFactory.fromFile(filePath);
         ByteBuffer pixels = tpgImage.toByteBuffer();
 
@@ -318,10 +325,10 @@ public class SenFileRenderer {
     }
 
     public static void main(String[] args) {
-//        SenFile senFile = SenFileFactory.fromFile("/home/wasd/Downloads/Mall Maniacs/scene_aqua/OBJECTS.SEN");
-        SenFile senFile = SenFileFactory.fromFile("/home/wasd/Downloads/Mall Maniacs/scene_aqua/AQUAMALL.SEN");
-//        SenFile senFile = SenFileFactory.fromFile("/home/wasd/Downloads/Mall Maniacs/scene_ica/MALL1_ICA.SEN");
-//        SenFile senFile = SenFileFactory.fromFile("/home/wasd/Downloads/Mall Maniacs/scene_ica/CHARACTERS.SEN");
+//        SenFile senFile = SenFileFactory.fromFile(Util.ROOT_DIR + "scene_aqua/OBJECTS.SEN");
+//        SenFile senFile = SenFileFactory.fromFile(Util.ROOT_DIR + "scene_aqua/AQUAMALL.SEN");
+//        SenFile senFile = SenFileFactory.fromFile(Util.ROOT_DIR + "scene_ica/MALL1_ICA.SEN");
+        SenFile senFile = SenFileFactory.fromFile(Util.ROOT_DIR + "scene_ica/CHARACTERS.SEN");
         new SenFileRenderer(senFile).run();
     }
 }

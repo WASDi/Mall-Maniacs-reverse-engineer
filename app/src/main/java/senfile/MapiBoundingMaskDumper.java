@@ -16,7 +16,7 @@ public class MapiBoundingMaskDumper {
     private static final Random r = new Random();
 
     public static void main(String[] args) throws IOException {
-        String filePath = "/home/wasd/Downloads/Mall Maniacs/scene_aqua/OBJECTS.SEN";
+        String filePath = Util.ROOT_DIR + "scene_aqua/OBJECTS.SEN";
 //        for (int i = 0; i < 32; i++) {
 //            dumpMapi(filePath, i);
 //        }

@@ -7,14 +7,13 @@ public enum GameMap {
     AQUA("scene_aqua", "AQUAMALL.SEN"),
     FUTURE("scene_future", "FUTUREMALL.SEN");
 
-    private static final String ROOT_DIRECTORY = "/home/wasd/Downloads/Mall Maniacs/";
     public static final GameMap SELECTED_MAP = AQUA;
 
     public final String senFileDirectory;
     public final String senFilePath;
 
     GameMap(String subFolder, String senFile) {
-        this.senFileDirectory = ROOT_DIRECTORY + subFolder + "/";
+        this.senFileDirectory = Util.ROOT_DIR + subFolder + "/";
         this.senFilePath = this.senFileDirectory + senFile;
     }
 }

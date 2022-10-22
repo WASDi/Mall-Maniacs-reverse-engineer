@@ -1,5 +1,6 @@
 package tpgviewer;
 
+import senfile.Util;
 import tpgviewer.tpg.TpgImage;
 import tpgviewer.tpg.TpgImageFactory;
 
@@ -28,10 +29,10 @@ public class ImageBrowserPanel extends JPanel implements KeyListener {
     }
 
     public void loadBytes() {
-        String filePath = String.format("/home/wasd/Downloads/Mall Maniacs/scene_ica/MERGED%02d.TPG", imgIndex);
-//        filePath = String.format("/home/wasd/Downloads/Mall Maniacs/scene_aqua/MERGED%02d.TPG", imgIndex);
-//        filePath = String.format("/home/wasd/Downloads/Mall Maniacs/scene_future/FUT%02d.TPG", imgIndex);
-//        String filePath = "/home/wasd/Downloads/Mall Maniacs/menu/SUSANNE00.TPG";
+        String filePath = String.format(Util.ROOT_DIR + "scene_ica/MERGED%02d.TPG", imgIndex);
+//        filePath = String.format(Util.ROOT_DIR + "scene_aqua/MERGED%02d.TPG", imgIndex);
+//        filePath = String.format(Util.ROOT_DIR + "scene_future/FUT%02d.TPG", imgIndex);
+//        String filePath = Util.ROOT_DIR + "menu/SUSANNE00.TPG";
         try {
             tpgImage = TpgImageFactory.fromFile(filePath);
             titleSetter.accept(filePath);

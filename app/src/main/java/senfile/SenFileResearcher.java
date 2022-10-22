@@ -55,10 +55,10 @@ public class SenFileResearcher {
     }
 
     private static void dumpOne() throws IOException {
-        String filePath = "/home/wasd/Downloads/Mall Maniacs/scene_ica/OBJECTS.SEN";
-//        filePath = "/home/wasd/Downloads/Mall Maniacs/menu/CHARACTERS.SEN";
+        String filePath = Util.ROOT_DIR + "scene_ica/OBJECTS.SEN";
+//        filePath = Util.ROOT_DIR + "menu/CHARACTERS.SEN";
         filePath = GameMap.WOOD.senFilePath;
-//        filePath = "/home/wasd/Downloads/Mall Maniacs/scene_aqua/AQUAMALL.SEN";
+//        filePath = Util.ROOT_DIR + "scene_aqua/AQUAMALL.SEN";
 
         List<SenFile> senFiles = getSingleSenFile(filePath);
         dump(senFiles);
@@ -78,7 +78,7 @@ public class SenFileResearcher {
     private static void renderMesh(String nameToFind) throws IOException {
 
 //        List<SenFile> senFiles = getAllSenFiles();
-        List<SenFile> senFiles = getSingleSenFile("/home/wasd/Downloads/Mall Maniacs/scene_aqua/OBJECTS.SEN");
+        List<SenFile> senFiles = getSingleSenFile(Util.ROOT_DIR + "scene_aqua/OBJECTS.SEN");
 
         Optional<SenMesh> meshOptional = senFiles
                 .stream()
@@ -142,7 +142,7 @@ public class SenFileResearcher {
     }
 
     private static List<SenFile> getAllSenFiles() throws IOException {
-        List<String> senFilePaths = Util.pathToAllSenFilesInDirectory("/home/wasd/Downloads/Mall Maniacs/");
+        List<String> senFilePaths = Util.pathToAllSenFilesInDirectory(Util.ROOT_DIR);
         List<SenFile> senFiles = new ArrayList<>(senFilePaths.size());
         for (String senFilePath : senFilePaths) {
             SenFile senFile = SenFileFactory.fromFile(senFilePath);
