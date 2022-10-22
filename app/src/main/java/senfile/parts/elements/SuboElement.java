@@ -76,26 +76,14 @@ public class SuboElement {
         // for numRestShorts 3 = linear increment + mapi index + zero
         // ABOVE IS FALSE FOR TRANSPARENT FACES
         public final short[] restShorts;
-        public final short biggestRestShort;
 
         public FaceInfo(byte[] vertexIndices, short[] restShorts) {
             this.vertexIndices = vertexIndices;
             this.restShorts = restShorts;
-            this.biggestRestShort = getBiggestRestShort(restShorts);
         }
 
         public int getMapiIndex() {
-            return biggestRestShort; // What are the other restShorts when not padding?
-        }
-
-        private static short getBiggestRestShort(short[] restShorts) {
-            short biggestRestShort = Short.MIN_VALUE;
-            for (short restShort : restShorts) {
-                if (restShort > biggestRestShort) {
-                    biggestRestShort = restShort;
-                }
-            }
-            return biggestRestShort;
+            return restShorts[restShorts.length == 1 ? 0 : 1];
         }
 
     }
