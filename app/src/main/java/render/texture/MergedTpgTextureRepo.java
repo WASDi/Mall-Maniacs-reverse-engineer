@@ -1,6 +1,7 @@
 package render.texture;
 
 import org.lwjglb.engine.graph.Texture;
+import senfile.Util;
 import tpgviewer.tpg.TpgImage;
 import tpgviewer.tpg.TpgImageFactory;
 
@@ -28,7 +29,7 @@ public class MergedTpgTextureRepo {
     }
 
     private void initMergedTpgTexture(int idx) {
-        String filePath = String.format("/home/wasd/Downloads/Mall Maniacs/scene_ica/MERGED%02d.TPG", idx);
+        String filePath = String.format(Util.ROOT_DIR + "scene_ica/MERGED%02d.TPG", idx);
         TpgImage tpgImage = TpgImageFactory.fromFile(filePath);
         ByteBuffer pixels = tpgImage.toByteBuffer();
 

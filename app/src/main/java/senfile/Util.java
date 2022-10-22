@@ -12,6 +12,7 @@ import java.util.List;
 public class Util {
 
     private static final boolean IGNORE_UNDERLINES = true;
+    public static final String ROOT_DIR = "/Users/wasd/Downloads/Mall Maniacs/";
 
     public static boolean ignoreBecauseUnderline(String meshName) {
         return Util.IGNORE_UNDERLINES && meshName.charAt(0) == '_';

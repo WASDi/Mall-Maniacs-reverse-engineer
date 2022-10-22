@@ -1,5 +1,6 @@
 package tpgviewer;
 
+import senfile.Util;
 import tpgviewer.util.BytesFromFileGetter;
 
 import javax.swing.JPanel;
@@ -30,8 +31,8 @@ public class ImageInspectorPanel extends JPanel implements KeyListener, MouseLis
     }
 
     public void loadBytes() {
-        String filePath = String.format("/home/wasd/Downloads/Mall Maniacs/menu/LEVEL%02d.TPG", imgIndex);
-//        String filePath = "/home/wasd/Downloads/Mall Maniacs/menu/KALLE00.TPG";
+        String filePath = String.format(Util.ROOT_DIR + "menu/LEVEL%02d.TPG", imgIndex);
+//        String filePath = Util.ROOT_DIR + "menu/KALLE00.TPG";
         try {
             bytes = BytesFromFileGetter.getBytes(filePath);
             titleSetter.accept(filePath);

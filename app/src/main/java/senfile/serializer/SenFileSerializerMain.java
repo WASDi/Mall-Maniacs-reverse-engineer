@@ -1,6 +1,7 @@
 package senfile.serializer;
 
 import senfile.GameMap;
+import senfile.Util;
 
 public class SenFileSerializerMain {
 
@@ -8,7 +9,7 @@ public class SenFileSerializerMain {
         long startTime = System.nanoTime();
 
         String filePath = GameMap.ICA.senFilePath;
-        String phFilePath = "/home/wasd/Downloads/Mall Maniacs/scene_ica/PHMALL1_ICA.SEN";
+        String phFilePath = Util.ROOT_DIR + "scene_ica/PHMALL1_ICA.SEN";
 
         serializeFromOriginal(filePath);
 //        serializeFromOriginal(phFilePath);
