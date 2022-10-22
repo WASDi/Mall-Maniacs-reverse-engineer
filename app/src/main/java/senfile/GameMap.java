@@ -7,13 +7,14 @@ public enum GameMap {
     AQUA("scene_aqua", "AQUAMALL.SEN"),
     FUTURE("scene_future", "FUTUREMALL.SEN");
 
-    public static final GameMap SELECTED_MAP = AQUA;
+    public static final GameMap SELECTED_MAP = ICA;
+    public static final boolean RENDER_CHARACTERS = true;
 
     public final String senFileDirectory;
     public final String senFilePath;
 
     GameMap(String subFolder, String senFile) {
         this.senFileDirectory = Util.ROOT_DIR + subFolder + "/";
-        this.senFilePath = this.senFileDirectory + senFile;
+        this.senFilePath = this.senFileDirectory + (RENDER_CHARACTERS ? "CHARACTERS.SEN" : senFile);
     }
 }

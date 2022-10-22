@@ -50,7 +50,8 @@ public class SenFileRenderer {
     private int[] texture_MERGED = new int[NUM_MERGED_TPG_FILES];
 
     private final SenFile senFile;
-    private int meshIdx = 14;
+    private int meshIdx = 21;
+    private int debugSubo = -1;
 
     private final Movement movement = new Movement();
 
@@ -95,6 +96,12 @@ public class SenFileRenderer {
                                int scancode, int action, int mods) {
                 if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE) {
                     glfwSetWindowShouldClose(window, true);
+                } else if (key == GLFW_KEY_UP && action == GLFW_PRESS) {
+                    debugSubo++;
+                    glfwSetWindowTitle(window, "debugSubo: " + debugSubo);
+                } else if (key == GLFW_KEY_DOWN && action == GLFW_PRESS) {
+                    debugSubo--;
+                    glfwSetWindowTitle(window, "debugSubo: " + debugSubo);
                 } else if (key == GLFW_KEY_LEFT && action == GLFW_PRESS) {
                     meshIdx--;
                     if (meshIdx < 0) {
@@ -180,7 +187,11 @@ public class SenFileRenderer {
         int[] suboOffsets = mesh.getSuboOffsets();
         Vertex[] vertices = mesh.getVertices();
 
-        for (int suboOffset : suboOffsets) {
+        for (int i = 0; i < suboOffsets.length; i++) {
+            if (debugSubo >= 0 && debugSubo != i) {
+                continue;
+            }
+            int suboOffset = suboOffsets[i];
             SuboElement.FaceInfo[] faceInfos = senFile.subo.elementByOffset(suboOffset).faceInfos;
 
             for (SuboElement.FaceInfo faceInfo : faceInfos) {
