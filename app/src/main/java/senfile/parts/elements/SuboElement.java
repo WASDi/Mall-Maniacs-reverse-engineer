@@ -83,7 +83,18 @@ public class SuboElement {
         }
 
         public int getMapiIndex() {
-            return restShorts[restShorts.length == 1 ? 0 : 1];
+            if (restShorts.length == 0) {
+                throw new IllegalArgumentException("restShorts.length == 0");
+            } else if (restShorts.length == 1) {
+                return restShorts[0];
+            }
+
+            if (restShorts[1] == 0) {
+                // Transparent face?
+                return restShorts[0];
+            }
+
+            return restShorts[1];
         }
 
     }
