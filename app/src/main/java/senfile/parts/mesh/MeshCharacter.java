@@ -2,6 +2,9 @@ package senfile.parts.mesh;
 
 import senfile.factories.VerticesFactory;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class MeshCharacter extends SenMesh {
 
     public final int constant8; // == 280 (0x118)
@@ -67,6 +70,8 @@ public class MeshCharacter extends SenMesh {
     public final VertexGroupDefinition[] vertexGroupDefinitions;
 
     public Vertex[][] groupedVertices;
+    public int[][] groupedVertexIds;
+    public int[] vertexId2Group;
 
     public MeshCharacter(String name, int bytesLeftUntilName, int meshIdx, int[] rawData) {
         super(name, bytesLeftUntilName, meshIdx, rawData);
@@ -140,7 +145,7 @@ public class MeshCharacter extends SenMesh {
         vertexGroupDefinitions = new VertexGroupDefinition[numVertexGroups];
         int totalIntsLeft = parseVertexGroups(name, rawData, idx);
 
-//        groupVertices();
+        groupVertices();
 
         idx += totalIntsLeft;
         int remainingInts = rawData.length - idx;
@@ -152,12 +157,19 @@ public class MeshCharacter extends SenMesh {
     private void groupVertices() {
         //FIXME useless since vertex group index used for animation is lost
         groupedVertices = new Vertex[numVertexGroups][];
+        groupedVertexIds = new int[numVertexGroups][];
+        vertexId2Group = new int[numVertices];
         int i = 0;
         for (int x = 0; x < vertexGroupDefinitions.length; x++) {
             VertexGroupDefinition vertexGroup = vertexGroupDefinitions[x];
             groupedVertices[x] = new Vertex[vertexGroup.size];
+            groupedVertexIds[x] = new int[vertexGroup.size];
             for (int y = 0; y < vertexGroup.size; y++) {
-                groupedVertices[x][y] = vertices[i++];
+                groupedVertices[x][y] = vertices[i];
+                groupedVertexIds[x][y] = i;
+                vertexId2Group[i] = x;
+
+                i++;
             }
         }
     }
