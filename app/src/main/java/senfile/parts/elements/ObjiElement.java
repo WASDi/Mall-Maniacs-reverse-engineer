@@ -9,7 +9,7 @@ import java.nio.ByteBuffer;
  */
 public class ObjiElement {
 
-    public final int _1; // linear steps around 6-13, probably references
+    public final int _1; // linear steps around 6-13, probably references. To ONAM values?
     public final int _2; // Always 1, except for part of ENDSCENE
     public final int constant; // == 0
 

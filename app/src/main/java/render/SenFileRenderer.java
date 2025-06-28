@@ -50,10 +50,10 @@ public class SenFileRenderer {
     private int[] texture_MERGED = new int[NUM_MERGED_TPG_FILES];
 
     private final SenFile senFile;
-    private int meshIdx = 21;
+    private int meshIdx = 29;
     private int debugSubo = -1;
 
-    private final Movement movement = new Movement();
+    private final Movement movement = new Movement(0f, 7f, 22f);
 
     public SenFileRenderer(SenFile senFile) {
         this.senFile = senFile;
@@ -114,6 +114,8 @@ public class SenFileRenderer {
                         meshIdx = 0;
                     }
                     glfwSetWindowTitle(window, "Mesh: " + meshIdx + " (" + senFile.meshes.get(meshIdx).name + ")");
+                } else if (key == GLFW_KEY_P && action == GLFW_PRESS) {
+                    glfwSetWindowTitle(window, movement.toString());
                 } else if (action == GLFW_PRESS || action == GLFW_RELEASE) {
                     movement.handleMovement(key, action == GLFW_PRESS);
                 }
@@ -280,7 +282,7 @@ public class SenFileRenderer {
             long thisTime = System.nanoTime();
             float totalRuntime = (thisTime - firstTime) / 1E9f;
             // Compute some rotation angle.
-            float angle = totalRuntime * .1f;
+            float angle = totalRuntime * .5f;
 
             movement.step(.5f); //TODO base on time
 
