@@ -13,6 +13,7 @@ import senfile.factories.SenFileFactory;
 import senfile.parts.elements.MapiElement;
 import senfile.parts.elements.ObjiElement;
 import senfile.parts.elements.SuboElement;
+import senfile.parts.mesh.MeshCharacter;
 import senfile.parts.mesh.SenMesh;
 import senfile.parts.mesh.Vertex;
 import tpgviewer.tpg.TpgImage;
@@ -22,6 +23,7 @@ import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.IntStream;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
@@ -51,7 +53,7 @@ public class SenFileRenderer {
 
     private final SenFile senFile;
     private int meshIdx = 29;
-    private int debugSubo = -1;
+    private int debug = -1;
 
     private final Movement movement = new Movement(0f, 7f, 22f);
 
@@ -97,11 +99,11 @@ public class SenFileRenderer {
                 if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE) {
                     glfwSetWindowShouldClose(window, true);
                 } else if (key == GLFW_KEY_UP && action == GLFW_PRESS) {
-                    debugSubo++;
-                    glfwSetWindowTitle(window, "debugSubo: " + debugSubo);
+                    debug++;
+                    glfwSetWindowTitle(window, "debug: " + debug);
                 } else if (key == GLFW_KEY_DOWN && action == GLFW_PRESS) {
-                    debugSubo--;
-                    glfwSetWindowTitle(window, "debugSubo: " + debugSubo);
+                    debug--;
+                    glfwSetWindowTitle(window, "debug: " + debug);
                 } else if (key == GLFW_KEY_LEFT && action == GLFW_PRESS) {
                     meshIdx--;
                     if (meshIdx < 0) {
@@ -190,18 +192,42 @@ public class SenFileRenderer {
         Vertex[] vertices = mesh.getVertices();
 
         for (int i = 0; i < suboOffsets.length; i++) {
-            if (debugSubo >= 0 && debugSubo != i) {
-                continue;
-            }
+//            if (debug >= 0 && debug != i) {
+//                continue;
+//            }
             int suboOffset = suboOffsets[i];
             SuboElement.FaceInfo[] faceInfos = senFile.subo.elementByOffset(suboOffset).faceInfos;
 
-            for (SuboElement.FaceInfo faceInfo : faceInfos) {
+            for (int j = 0; j < faceInfos.length; j++) {
+//                if (debug >= 0 && debug == j) {
+//                    break;
+//                }
+                SuboElement.FaceInfo faceInfo = faceInfos[j];
                 byte[] vertexIndices = faceInfo.vertexIndices;
                 int v0 = vertexIndices[0] & 0xFF;
                 int v1 = vertexIndices[1] & 0xFF;
                 int v2 = vertexIndices[2] & 0xFF;
                 int v3 = vertexIndices[3] & 0xFF;
+
+                boolean[] bumps = new boolean[4];
+                if (debug >= 0 && mesh instanceof MeshCharacter) {
+                    int[] vertexId2Group = ((MeshCharacter) mesh).vertexId2Group;
+
+                    // Render one vertex group at a time
+                    if (IntStream.range(0, vertexIndices.length)
+                            .mapToObj(it -> vertexIndices[it])
+                            .noneMatch(it -> vertexId2Group[it] == debug)) {
+                        //continue;
+                    }
+
+                    // offset vertex groups
+                    for (int k = 0; k < bumps.length; k++) {
+                        if (vertexId2Group[vertexIndices[k]] == debug) {
+                            bumps[k] = true;
+                        }
+                    }
+                }
+
 
                 int textureIndexForFace = faceInfo.getMapiIndex();
                 MapiElement mapiElement = senFile.mapi.elements[textureIndexForFace];
@@ -224,24 +250,24 @@ public class SenFileRenderer {
                 glBegin(GL_TRIANGLES);
 
                 glTexCoord2f(v0tx, v0ty);
-                putVertex(vertices[v0]);
+                putVertex(vertices[v0], bumps[0]);
 
                 glTexCoord2f(v1tx, v1ty);
-                putVertex(vertices[v1]);
+                putVertex(vertices[v1], bumps[1]);
 
                 glTexCoord2f(v2tx, v2ty);
-                putVertex(vertices[v2]);
+                putVertex(vertices[v2], bumps[2]);
 
                 // --- //
 
                 glTexCoord2f(v3tx, v3ty);
-                putVertex(vertices[v3]);
+                putVertex(vertices[v3], bumps[3]);
 
                 glTexCoord2f(v0tx, v0ty);
-                putVertex(vertices[v0]);
+                putVertex(vertices[v0], bumps[0]);
 
                 glTexCoord2f(v2tx, v2ty);
-                putVertex(vertices[v2]);
+                putVertex(vertices[v2], bumps[2]);
 
 
                 glEnd();
@@ -251,7 +277,11 @@ public class SenFileRenderer {
 
     private static final float SCALE = .002f;
 
-    private void putVertex(Vertex vertex) {
+    private void putVertex(Vertex vertex, boolean bump) {
+        if (bump) {
+            int offset = -300;
+            vertex = new Vertex(vertex.x + offset, vertex.y + offset, vertex.z + offset);
+        }
         glVertex3f(vertex.x * SCALE, -vertex.y * SCALE, vertex.z * SCALE);
     }
 
