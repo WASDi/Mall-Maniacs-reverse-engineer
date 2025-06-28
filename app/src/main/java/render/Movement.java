@@ -15,6 +15,14 @@ public class Movement {
     private boolean spaceDown;
     private boolean ctrlDown;
 
+    public Movement() {
+    }
+
+    public Movement(float x, float y, float z) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+    }
 
     public void handleMovement(int key, boolean press) {
         switch (key) {
@@ -41,22 +49,22 @@ public class Movement {
 
     public void step(float step) {
         if (wDown) {
-            z -= step;
-        }
-        if (aDown) {
-            x -= step;
-        }
-        if (sDown) {
             z += step;
         }
-        if (dDown) {
+        if (aDown) {
             x += step;
         }
+        if (sDown) {
+            z -= step;
+        }
+        if (dDown) {
+            x -= step;
+        }
         if (spaceDown) {
-            y += step;
+            y -= step;
         }
         if (ctrlDown) {
-            y -= step;
+            y += step;
         }
 
     }
@@ -71,5 +79,14 @@ public class Movement {
 
     public float getZ() {
         return z;
+    }
+
+    @Override
+    public String toString() {
+        return "Movement{" +
+                "x=" + x +
+                ", y=" + y +
+                ", z=" + z +
+                '}';
     }
 }

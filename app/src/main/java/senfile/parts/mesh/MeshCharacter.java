@@ -171,6 +171,8 @@ public class MeshCharacter extends SenMesh {
                                                     + " for character " + name);
         }
 
+        // VONKEL     sizes (16): 4, 13, 20, 3, 4, 4, 3, 4, 4, 1, 6, 7, 4, 6, 7, 4
+        // KASSOERSKA sizes (10): 4, 14, 13, 3, 4, 4, 3, 4, 4, 10
         for (int i = 0; i < vertexGroupDefinitions.length; i++) {
             int size = rawData[idx + i * 3];
             int constant0 = rawData[idx + i * 3 + 1];
