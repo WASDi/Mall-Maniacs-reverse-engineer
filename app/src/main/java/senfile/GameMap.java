@@ -8,7 +8,7 @@ public enum GameMap {
     FUTURE("scene_future", "FUTUREMALL.SEN");
 
     public static final GameMap SELECTED_MAP = ICA;
-    public static final boolean RENDER_CHARACTERS = true;
+    public static final boolean RENDER_CHARACTERS = false;
 
     public final String senFileDirectory;
     public final String senFilePath;
