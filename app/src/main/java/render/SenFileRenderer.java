@@ -192,16 +192,10 @@ public class SenFileRenderer {
         Vertex[] vertices = mesh.getVertices();
 
         for (int i = 0; i < suboOffsets.length; i++) {
-//            if (debug >= 0 && debug != i) {
-//                continue;
-//            }
             int suboOffset = suboOffsets[i];
             SuboElement.FaceInfo[] faceInfos = senFile.subo.elementByOffset(suboOffset).faceInfos;
 
             for (int j = 0; j < faceInfos.length; j++) {
-//                if (debug >= 0 && debug == j) {
-//                    break;
-//                }
                 SuboElement.FaceInfo faceInfo = faceInfos[j];
                 byte[] vertexIndices = faceInfo.vertexIndices;
                 int v0 = vertexIndices[0] & 0xFF;
