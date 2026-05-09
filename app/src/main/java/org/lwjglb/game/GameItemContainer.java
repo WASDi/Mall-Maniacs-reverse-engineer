@@ -11,8 +11,8 @@ import java.util.function.Consumer;
 
 public class GameItemContainer {
 
-    private List<GameItem> solidGameItems = new ArrayList<>();
-    private List<GameItemWithDistance> transparentGameItems = new ArrayList<>();
+    private final List<GameItem> solidGameItems = new ArrayList<>();
+    private final List<GameItemWithDistance> transparentGameItems = new ArrayList<>();
 
 
     public void addGameItem(GameItem gameItem, boolean transparent) {

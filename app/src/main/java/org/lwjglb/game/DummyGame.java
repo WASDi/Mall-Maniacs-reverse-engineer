@@ -45,7 +45,7 @@ public class DummyGame implements IGameLogic {
 
     public DummyGame() {
         renderer = new Renderer();
-        camera = new Camera();
+        camera = new Camera(new Vector3f(-10,10,25), new Vector3f());
         cameraInc = new Vector3f(0, 0, 0);
     }
 
