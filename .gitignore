@@ -1,4 +1,3 @@
 **/.ipynb_checkpoints
-.gradle
 .idea
-build
+app/target
