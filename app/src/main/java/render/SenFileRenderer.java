@@ -39,10 +39,10 @@ public class SenFileRenderer {
     private int height = 600;
 
     // JOML matrices
-    private Matrix4f projMatrix = new Matrix4f();
-    private Matrix4f viewMatrix = new Matrix4f();
-    private Matrix4f modelMatrix = new Matrix4f();
-    private Matrix4f modelViewMatrix = new Matrix4f();
+    private final Matrix4f projMatrix = new Matrix4f();
+    private final Matrix4f viewMatrix = new Matrix4f();
+    private final Matrix4f modelMatrix = new Matrix4f();
+    private final Matrix4f modelViewMatrix = new Matrix4f();
 
     // FloatBuffer for transferring matrices to OpenGL
     private FloatBuffer fb = BufferUtils.createFloatBuffer(16);
