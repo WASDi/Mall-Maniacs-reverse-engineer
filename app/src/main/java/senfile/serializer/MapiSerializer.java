@@ -15,8 +15,8 @@ public class MapiSerializer {
         buffer.putInt(HeaderTexts.MAPI);
         buffer.putInt(MapiFactory.BYTES_PER_MAPI_ELEMENT * mapi.elements.length);
         for (MapiElement mapiElement : mapi.elements) {
-            buffer.putInt(mapiElement.tpgFileIndex);
-            buffer.putInt(mapiElement.isInPhFile);
+            buffer.putInt(mapiElement.materialIndex);
+            buffer.putInt(mapiElement.flags);
             for (byte textureCoordByte : mapiElement.textureCoordBytes) {
                 buffer.put(textureCoordByte);
             }

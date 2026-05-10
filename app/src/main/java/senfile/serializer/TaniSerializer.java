@@ -15,7 +15,7 @@ public class TaniSerializer {
 
         buffer.putInt(HeaderTexts.TANI);
         buffer.putInt(tani.sizeOfTani);
-        for (int taniInt : senFile.tani.taniInts) {
+        for (int taniInt : senFile.tani.animationData) {
             buffer.putInt(taniInt);
         }
 

@@ -9,7 +9,7 @@ public class ColsSerializer {
     public static void serializeCols(SenFile senFile, ByteBuffer buffer) {
         buffer.putInt(HeaderTexts.COLS);
         buffer.putInt(senFile.cols.sizeOfCols);
-        for (int colInt : senFile.cols.colInts) {
+        for (int colInt : senFile.cols.rgbaColors) {
             buffer.putInt(colInt);
         }
     }

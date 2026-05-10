@@ -17,8 +17,8 @@ public class SuboSerializer {
 
         for (SuboElement element : subo.elements) {
             buffer.put(element.numFacesSigned);
-            buffer.put(element.triangleOrQuad);
-            buffer.put(element._3);
+            buffer.put(element.facesPerPolygon);
+            buffer.put(element.constantValue4);
             buffer.put(element.transparency);
             buffer.putShort(element.constant1);
             buffer.put(element.shortsPerFace);
@@ -27,8 +27,8 @@ public class SuboSerializer {
                 for (byte vertexIndex : faceInfo.vertexIndices) {
                     buffer.put(vertexIndex);
                 }
-                for (short restShort : faceInfo.restShorts) {
-                    buffer.putShort(restShort);
+                for (short faceDataEntry : faceInfo.faceData) {
+                    buffer.putShort(faceDataEntry);
                 }
             }
         }

@@ -9,9 +9,9 @@ import java.nio.ByteBuffer;
  */
 public class ObjiElement {
 
-    public final int _1; // linear steps around 6-13, probably references. To ONAM values?
-    public final int _2; // Always 1, except for part of ENDSCENE
-    public final int constant; // == 0
+    public final int nameOffset; // byte offset into ONAM buffer
+    public final int objectType; // 1=mesh, 3=sentinel/end, other=billboard
+    public final int meshHandle; // index into KEEP mesh table
 
     public final float x;
     public final float y;
@@ -20,14 +20,14 @@ public class ObjiElement {
     public final short rotX;
     public final short rotY;
     public final short rotZ;
-    public final short elementIdx;
+    public final short sceneryEntryIdx;
 
     public String nameOfMesh;
 
     public ObjiElement(ByteBuffer buffer) {
-        _1 = buffer.getInt();
-        _2 = buffer.getInt();
-        constant = buffer.getInt();
+        nameOffset = buffer.getInt();
+        objectType = buffer.getInt();
+        meshHandle = buffer.getInt();
 
         x = buffer.getFloat();
         y = buffer.getFloat();
@@ -36,7 +36,7 @@ public class ObjiElement {
         rotX = buffer.getShort();
         rotY = buffer.getShort();
         rotZ = buffer.getShort();
-        elementIdx = buffer.getShort();
+        sceneryEntryIdx = buffer.getShort();
     }
 
     public void setNameOfMesh(String nameOfMesh) {

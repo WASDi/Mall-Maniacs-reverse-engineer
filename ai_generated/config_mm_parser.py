@@ -2,7 +2,7 @@ r"""
 config.mm Parser — Mall Maniacs (v0.40)
 ========================================
 
-Reverse-engineered from dogbolt_decompile.c (Hex-Rays, Visual C++ target).
+Reverse-engineered from decompile.c (Hex-Rays, Visual C++ target).
 
 FILE FORMAT OVERVIEW
 --------------------

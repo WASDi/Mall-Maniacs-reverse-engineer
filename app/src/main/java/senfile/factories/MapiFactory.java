@@ -16,11 +16,11 @@ public class MapiFactory {
         MapiElement[] elements = new MapiElement[numMapiElements];
 
         for (int i = 0; i < numMapiElements; i++) {
-            int _1 = buffer.getInt();
-            int _2 = buffer.getInt();
+            int materialIndex = buffer.getInt();
+            int flags = buffer.getInt();
             byte[] posBytes = new byte[8];
             buffer.get(posBytes);
-            MapiElement mapiElement = new MapiElement(_1, _2, posBytes);
+            MapiElement mapiElement = new MapiElement(materialIndex, flags, posBytes);
             elements[i] = mapiElement;
         }
 
