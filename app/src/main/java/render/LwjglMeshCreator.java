@@ -39,7 +39,7 @@ public class LwjglMeshCreator {
 
                 int textureIndexForFace = faceInfo.getMapiIndex();
                 MapiElement mapiElement = senFile.mapi.elements[textureIndexForFace];
-                int tpgFileIndex = mapiElement.tpgFileIndex;
+                int tpgFileIndex = mapiElement.materialIndex;
                 byte[] coords = mapiElement.textureCoordBytes;
 
 

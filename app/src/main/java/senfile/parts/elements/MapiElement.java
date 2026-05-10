@@ -5,16 +5,16 @@ package senfile.parts.elements;
  */
 public class MapiElement {
 
-    public final int tpgFileIndex;
-    public final int isInPhFile; // 0 if true, 0x640000 if false
+    public final int materialIndex;
+    public final int flags; // 0=in PH archive, 0x640000=standalone file
 
     //x1,y1  x2,y2  x3,y3  x4,y4
     public final byte[] textureCoordBytes;
 
-    public MapiElement(int _1, int _2, byte[] textureCoordBytes) {
+    public MapiElement(int materialIndex, int flags, byte[] textureCoordBytes) {
 
-        this.tpgFileIndex = _1;
-        this.isInPhFile = _2;
+        this.materialIndex = materialIndex;
+        this.flags = flags;
         this.textureCoordBytes = textureCoordBytes;
     }
 }

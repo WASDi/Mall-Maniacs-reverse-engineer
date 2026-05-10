@@ -10,22 +10,22 @@ public abstract class SenMesh {
     public final int bytesLeftUntilName;
     public final int meshIdx;
 
-    public final int constant1; // == 1
-    public final int constant2; // == 1
-    public final int isCharacter1; // 15 (0xF) if true, 0 if false
-    public final int constant3; // == 52
-    public final int isCharacter2; // 172 (0xAC) if true, 52 (0x34) if false
-    public final int isCharacter3; // 232 (0xE8) if true, 52 (0x34) if false
+    public final int flags; // uint32 flags (always 1 in observed data)
+    public final int unknown1; // uint32 unknown (always 1 in observed data)
+    public final int numExtraSub; // extra sub-objects beyond root (0 for mesh objects, non-zero for characters)
+    public final int subTransformOffset; // byte offset into blob of sub-object transform table
+    public final int subMaterialOffset; // byte offset into blob of per-sub material index table
+    public final int lodOffset; // byte offset into blob of first LOD descriptor
 
-    public final int _7; // Delat värde mellan liknande mesh. Vid ändring försvinner rendering vid olika avstånd
+    public final int meshHandle; // display-list handle / render-object index (patched at runtime)
 
-    public final int constant4; // == 0
-    public final int constant5; // == 0
-    public final int constant6; // == 0
+    public final int reserved0; // == 0
+    public final int reserved1; // == 0
+    public final int reserved2; // == 0
 
-    public final int _11; // Majority is 0. 23347218 for some MALL1_ICA and 68321298 for some PHFUTUREMALL and WOODMALL
+    public final int unknown4; // Majority is 0. 23347218 for some MALL1_ICA and 68321298 for some PHFUTUREMALL and WOODMALL
 
-    public final int constant7; // == 0
+    public final int reserved4; // == 0
 
 
     public SenMesh(String name, int bytesLeftUntilName, int meshIdx, int[] rawData) {
@@ -33,18 +33,18 @@ public abstract class SenMesh {
         this.bytesLeftUntilName = bytesLeftUntilName;
         this.meshIdx = meshIdx;
         int idx = 0;
-        this.constant1 = rawData[idx++];
-        this.constant2 = rawData[idx++];
-        this.isCharacter1 = rawData[idx++];
-        this.constant3 = rawData[idx++];
-        this.isCharacter2 = rawData[idx++];
-        this.isCharacter3 = rawData[idx++];
-        this._7 = rawData[idx++];
-        this.constant4 = rawData[idx++];
-        this.constant5 = rawData[idx++];
-        this.constant6 = rawData[idx++];
-        this._11 = rawData[idx++];
-        this.constant7 = rawData[idx++];
+        this.flags = rawData[idx++];
+        this.unknown1 = rawData[idx++];
+        this.numExtraSub = rawData[idx++];
+        this.subTransformOffset = rawData[idx++];
+        this.subMaterialOffset = rawData[idx++];
+        this.lodOffset = rawData[idx++];
+        this.meshHandle = rawData[idx++];
+        this.reserved0 = rawData[idx++];
+        this.reserved1 = rawData[idx++];
+        this.reserved2 = rawData[idx++];
+        this.unknown4 = rawData[idx++];
+        this.reserved4 = rawData[idx++];
     }
 
     public abstract Vertex[] getVertices();

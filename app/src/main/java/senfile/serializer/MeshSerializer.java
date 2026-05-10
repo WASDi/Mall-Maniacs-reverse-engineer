@@ -20,18 +20,18 @@ public class MeshSerializer {
         for (SenMesh mesh : senFile.meshes) {
             buffer.putInt(HeaderTexts.MESH);
             buffer.putInt(mesh.bytesLeftUntilName);
-            buffer.putInt(mesh.constant1);
-            buffer.putInt(mesh.constant2);
-            buffer.putInt(mesh.isCharacter1);
-            buffer.putInt(mesh.constant3);
-            buffer.putInt(mesh.isCharacter2);
-            buffer.putInt(mesh.isCharacter3);
-            buffer.putInt(mesh._7);
-            buffer.putInt(mesh.constant4);
-            buffer.putInt(mesh.constant5);
-            buffer.putInt(mesh.constant6);
-            buffer.putInt(mesh._11);
-            buffer.putInt(mesh.constant7);
+            buffer.putInt(mesh.flags);
+            buffer.putInt(mesh.unknown1);
+            buffer.putInt(mesh.numExtraSub);
+            buffer.putInt(mesh.subTransformOffset);
+            buffer.putInt(mesh.subMaterialOffset);
+            buffer.putInt(mesh.lodOffset);
+            buffer.putInt(mesh.meshHandle);
+            buffer.putInt(mesh.reserved0);
+            buffer.putInt(mesh.reserved1);
+            buffer.putInt(mesh.reserved2);
+            buffer.putInt(mesh.unknown4);
+            buffer.putInt(mesh.reserved4);
             mesh.visit(subMeshSerializer);
             buffer.putInt(HeaderTexts.NAME);
 
@@ -57,19 +57,19 @@ public class MeshSerializer {
 
         @Override
         public void visit(MeshObject mesh) {
-            buffer.putInt(mesh.constant8);
-            buffer.putInt(mesh.constant9);
+            buffer.putInt(mesh.meshDataBaseSize);
+            buffer.putInt(mesh.maxDrawDistance);
             buffer.putInt(mesh.numVertices);
-            buffer.putInt(mesh.constant10);
-            buffer.putInt(mesh.constant11);
-            buffer.putInt(mesh.ok_18);
+            buffer.putInt(mesh.vertexDataOffset);
+            buffer.putInt(mesh.reserved0);
+            buffer.putInt(mesh.vertexDataEndOffset);
             buffer.putInt(mesh.numSuboReferences);
-            buffer.putInt(mesh.ok_20);
-            buffer.putInt(mesh.constant12);
-            buffer.putInt(mesh._22);
-            buffer.putInt(mesh.constant13);
-            buffer.putInt(mesh.constant14);
-            buffer.putInt(mesh.ok_25);
+            buffer.putInt(mesh.suboRefsTableOffset);
+            buffer.putInt(mesh.numMeshParts);
+            buffer.putInt(mesh.faceGroupsCount);
+            buffer.putInt(mesh.reserved1);
+            buffer.putInt(mesh.reserved2);
+            buffer.putInt(mesh.vertexGroupDefOffset);
             for (Vertex vertex : mesh.vertices) {
                 int part1 = VerticesFactory.reversePart1(vertex);
                 int part2 = VerticesFactory.reversePart2(vertex);

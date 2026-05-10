@@ -7,8 +7,8 @@ import java.nio.ByteBuffer;
 public class SuboElement {
 
     public final byte numFacesSigned;
-    public final byte triangleOrQuad; // value = 3 or 4. TREAT SPECIALLY IF INHERENT TRIANGLE TO FIX RENDERING BUG !!!
-    public final byte _3; // constant value 4 for objects?
+    public final byte facesPerPolygon; // 3=triangles, 4=quads. TREAT SPECIALLY IF INHERENT TRIANGLE TO FIX RENDERING BUG !!!
+    public final byte constantValue4; // constant value 4 for objects?
     public final byte transparency; // Different values, does it mean order of rendering?
 
     public final short constant1; // == 0
@@ -25,8 +25,8 @@ public class SuboElement {
         this.offset = offset;
 
         numFacesSigned = buffer.get();
-        triangleOrQuad = buffer.get();
-        _3 = buffer.get();
+        facesPerPolygon = buffer.get();
+        constantValue4 = buffer.get();
         transparency = buffer.get();
 
         constant1 = buffer.getShort();
@@ -49,7 +49,7 @@ public class SuboElement {
     }
 
     public boolean isQuad() {
-        return triangleOrQuad == 4;
+        return facesPerPolygon == 4;
     }
 
     public SuboElementTransparencyMode getTransparencyMode() {
@@ -75,26 +75,26 @@ public class SuboElement {
         // for numRestShorts 2 = linear increment + mapi index
         // for numRestShorts 3 = linear increment + mapi index + zero
         // ABOVE IS FALSE FOR TRANSPARENT FACES
-        public final short[] restShorts;
+        public final short[] faceData;
 
-        public FaceInfo(byte[] vertexIndices, short[] restShorts) {
+        public FaceInfo(byte[] vertexIndices, short[] faceData) {
             this.vertexIndices = vertexIndices;
-            this.restShorts = restShorts;
+            this.faceData = faceData;
         }
 
         public int getMapiIndex() {
-            if (restShorts.length == 0) {
-                throw new IllegalArgumentException("restShorts.length == 0");
-            } else if (restShorts.length == 1) {
-                return restShorts[0];
+            if (faceData.length == 0) {
+                throw new IllegalArgumentException("faceData.length == 0");
+            } else if (faceData.length == 1) {
+                return faceData[0];
             }
 
-            if (restShorts[1] == 0) {
+            if (faceData[1] == 0) {
                 // Transparent face?
-                return restShorts[0];
+                return faceData[0];
             }
 
-            return restShorts[1];
+            return faceData[1];
         }
 
     }

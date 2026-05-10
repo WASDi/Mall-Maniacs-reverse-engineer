@@ -30,7 +30,7 @@ public class MapiBoundingMaskDumper {
         Graphics2D g2d = img.createGraphics();
         int numElementsDumped = 0;
         for (MapiElement element : senFile.mapi.elements) {
-            if (element.tpgFileIndex == tpgFileIndex) {
+            if (element.materialIndex == tpgFileIndex) {
 
                 if(numElementsDumped == 5) {
                     break;
