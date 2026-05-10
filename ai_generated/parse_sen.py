@@ -55,10 +55,15 @@ COLS  Colour table.  Payload = array of uint32 RGBA values.
 OBJI  Object instance table.  Payload = array of 32-byte records.
       Entry count = payload_size / 32.
       Each record (all little-endian):
-          [+00]  int32   reserved / name offset (byte offset into ONAM buffer)
-          [+04]  int32   object type  (1 = standard mesh object,
-                                       3 = sentinel / end marker,
-                                       other = billboard/sprite type)
+          [+00]  int32   name_offset   BYTE OFFSET into the ONAM string buffer
+                                       (not an array index; the engine walks the
+                                       buffer with a pointer, ~line 41263 of
+                                       sub_432320 in decompile.c)
+          [+04]  int32   object type  (1 = standard mesh object → sub_430200,
+                                       3 = sentinel / end marker → loop break,
+                                       other = billboard/sprite type →
+                                         sub_4319E0 or sub_431B00 selected by
+                                         strstr() against SubStr[16] table)
           [+08]  int32   mesh handle  (index into KEEP mesh table)
           [+12]  float32 x position
           [+16]  float32 y position
@@ -67,8 +72,8 @@ OBJI  Object instance table.  Payload = array of 32-byte records.
           [+26]  int16   rotation y
           [+28]  int16   rotation z  (also used as sprite-frame index
                                        for billboard objects)
-          [+30]  int16   scenery entry index (index into the scene
-                                       object table built during loading)
+          [+30]  int16   mesh entry index (index into the array of MESH chunks
+                                       loaded for this scene)
 
 NAME  Inline name string.  Payload = null-terminated name for the
       preceding MESH entry.  Written into the scenery name pool.
@@ -181,11 +186,21 @@ class Chunk:
 class ObjInstance:
     """32-byte OBJI record.
 
-    Parsed from sub_432320 (the main SEN loader).  The 'name_offset' field is
-    a byte offset into the flat ONAM string buffer (not a list index).
-    'object_type' values: 1 = standard mesh, 3 = end sentinel, other = billboard.
+    Parsed from sub_432320 (the main SEN loader).
+
+    'name_offset' is a BYTE OFFSET into the flat ONAM string buffer (not an
+    array index).  In the decompile, sub_432320 stores a raw pointer derived
+    by walking the ONAM buffer byte-by-byte (v37/v39 loop at ~line 41263) and
+    later passes it as a C-string pointer.  Use SenFile.onam_buffer and
+    name_at_offset() to resolve the actual name string.
+
+    'object_type' dispatch (sub_432320, ~line 41286):
+        1  -> standard mesh object  -> sub_430200()
+        3  -> end sentinel          -> loop break
+        other -> billboard/sprite   -> sub_4319E0() or sub_431B00()
+                 (selection by strstr() against SubStr[] table of 16 entries)
     """
-    name_offset: int
+    name_offset: int      # byte offset into flat ONAM buffer (NOT an array index)
     object_type: int
     mesh_handle: int
     x: float
@@ -194,11 +209,11 @@ class ObjInstance:
     rot_x: int
     rot_y: int
     rot_z: int           # also sprite-frame index for billboard objects
-    scene_entry_idx: int
+    mesh_entry_idx: int
 
     @property
     def type_name(self) -> str:
-        return {1: 'mesh', 3: 'end_sentinel'}.get(self.object_type, f'type_{self.object_type}')
+        return {1: 'mesh', 3: 'end_sentinel'}.get(self.object_type, f'billboard_type_{self.object_type}')
 
 
 @dataclass
@@ -216,16 +231,47 @@ class MatEntry:
 
 
 @dataclass
+class SubObjectEntry:
+    """Sub-object position offset and material entry (extra sub-objects beyond root).
+
+    Each entry is read from the tables at sub_transform_offset and
+    sub_material_offset inside a MESH payload blob when num_extra_sub > 0.
+    The root sub-object (index 0) does NOT have a table entry — it uses
+    identity transform implicitly (zero offset, identity rotation/scale).
+
+    Position offset table entry (8 bytes):
+        [+0]  int16  offset_x   sub-object centre relative to root origin
+        [+2]  int16  offset_y
+        [+4]  int16  offset_z
+        [+6]  int16  padding
+
+    Material table entry (4 bytes):
+        [+0]  int32  material_index
+
+    Consumption in sub_430200 (decompile.c):
+      - The three int16s are sign-extended and stored as dwords at
+        offsets +16, +20, +24 within each sub-object's 112-byte transform
+        block.  sub_4303C0 reads these fields for bounding-sphere calcs:
+          sqrt(offset_x² + offset_y² + offset_z²) + base_radius
+      - Rotation words at offsets +0, +2, +4 of the same block are
+        initialised to zero (identity) and can be modified at runtime by
+        ANM opcode-5 animation (sub_430A90).
+    """
+    offset_x: int
+    offset_y: int
+    offset_z: int
+    material_index: int
+
+
+@dataclass
 class MeshHeader:
     """Parsed header from a MESH payload blob.
 
     Layout (all little-endian):
         [+00]  uint32  flags          (always 1 in observed data)
         [+04]  uint32  unknown1       (always 1 in observed data)
-        [+08]  uint8   num_extra_sub  extra sub-objects beyond the root
-                                      (*((_BYTE*)v9+8) in sub_430200)
-        [+09]  uint8   pad0
-        [+10]  uint16  pad1
+        [+08]  uint32  num_extra_sub  extra sub-objects beyond the root
+                                      (read as full uint32 in malloc, used as byte in loop)
         [+12]  uint32  sub_transform_offset  byte offset into blob of sub-object
                                              transform table (v9[3])
         [+16]  uint32  sub_material_offset   byte offset into blob of per-sub
@@ -249,6 +295,7 @@ class MeshHeader:
     mesh_handle: int
     lod_max_draw_dist: Optional[int]
     lod_poly_count: Optional[int]
+    sub_objects: list[SubObjectEntry]
     raw_size: int
 
 
@@ -288,7 +335,8 @@ class TaniEntry:
 @dataclass
 class SenFile:
     total_data_size: int
-    object_names: list[str]
+    onam_buffer: bytes               # raw flat ONAM payload (null-separated names)
+    object_names: list[str]          # convenience list; use name_at_offset() for OBJI lookups
     texture_names: list[str]
     object_instances: list[ObjInstance]
     material_map: list[MatEntry]
@@ -299,6 +347,21 @@ class SenFile:
     keep_blob: Optional[bytes]           # raw KEEP payload
     temp_blob: Optional[bytes]           # raw TEMP payload
     unknown_chunks: list[Chunk]
+
+    def name_at_offset(self, byte_offset: int) -> str:
+        """Resolve a name from a byte offset into the ONAM buffer.
+
+        OBJI records store byte offsets into the flat null-terminated ONAM
+        string buffer (not array indices).  This mirrors how sub_432320 walks
+        the buffer with a pointer (v39) in the OBJI processing loop
+        (~line 41263 of decompile.c).
+        """
+        if not self.onam_buffer or byte_offset >= len(self.onam_buffer):
+            return f'<onam+{byte_offset}>'
+        end = self.onam_buffer.find(b'\x00', byte_offset)
+        if end == -1:
+            end = len(self.onam_buffer)
+        return self.onam_buffer[byte_offset:end].decode('latin-1')
 
 
 # ---------------------------------------------------------------------------
@@ -372,6 +435,13 @@ def parse_string_table(data: bytes) -> list[str]:
 
 
 def parse_obji(data: bytes) -> list[ObjInstance]:
+    """Parse the OBJI payload into ObjInstance records.
+
+    Mirrors the OBJI branch in sub_432320 (~line 41171 of decompile.c).
+    The first int32 field is a BYTE OFFSET into the ONAM string buffer,
+    not an array index.  The engine resolves it by pointer arithmetic
+    (v37/v39 loop at ~line 41263).
+    """
     if len(data) % 32 != 0:
         print(
             f"Warning: OBJI payload size {len(data)} is not a multiple of 32; "
@@ -390,7 +460,7 @@ def parse_obji(data: bytes) -> list[ObjInstance]:
             mesh_handle=mesh_handle,
             x=x, y=y, z=z,
             rot_x=rot_x, rot_y=rot_y, rot_z=rot_z,
-            scene_entry_idx=scene_idx,
+            mesh_entry_idx=scene_idx,
         ))
     return entries
 
@@ -414,11 +484,52 @@ def parse_cols(data: bytes) -> list[int]:
     return list(struct.unpack_from(f'<{count}I', data))
 
 
+def parse_sub_object_table(data: bytes,
+                           num_extra_sub: int,
+                           sub_transform_offset: int,
+                           sub_material_offset: int) -> list[SubObjectEntry]:
+    """Parse the sub-object position-offset and material tables.
+
+    Each extra sub-object (beyond the root) has one entry in each table:
+
+        Position offset table — 8 bytes per entry:
+            [+0]  int16  offset_x
+            [+2]  int16  offset_y
+            [+4]  int16  offset_z
+            [+6]  int16  padding
+
+        Material table — 4 bytes per entry:
+            [+0]  int32  material_index
+
+    Mirrors sub_430200 loop (v13 = 2 .. count) in decompile.c.
+    The three int16s are sign-extended to dwords and stored at offsets
+    +16, +20, +24 per sub-object's 112-byte block, used as a position
+    vector in bounding-sphere computation (sub_4303C0).
+    """
+    entries: list[SubObjectEntry] = []
+    for i in range(num_extra_sub):
+        t_off = sub_transform_offset + i * 8
+        m_off = sub_material_offset + i * 4
+        if t_off + 6 > len(data) or m_off + 4 > len(data):
+            break
+        off_x, off_y, off_z = struct.unpack_from('<hhh', data, t_off)
+        mat_idx = struct.unpack_from('<I', data, m_off)[0]
+        entries.append(SubObjectEntry(
+            offset_x=off_x, offset_y=off_y, offset_z=off_z,
+            material_index=mat_idx,
+        ))
+    return entries
+
+
 def parse_mesh_header(data: bytes) -> MeshHeader:
     """Parse the header of a MESH payload blob.
 
     The blob is an engine mesh-object descriptor.  The first 32 bytes form a
     fixed header; the LOD descriptor lives at the offset stored in lod_offset.
+    When num_extra_sub > 0 the sub_transform_offset and sub_material_offset
+    point to tables consumed by sub_430200 to initialise child display-list
+    entries for a multi-sub mesh.
+
     Mirrors the load path in sub_430200 / sub_432320.
     """
     if len(data) < 28:
@@ -427,10 +538,11 @@ def parse_mesh_header(data: bytes) -> MeshHeader:
             sub_transform_offset=0, sub_material_offset=0,
             lod_offset=0, mesh_handle=0,
             lod_max_draw_dist=None, lod_poly_count=None,
+            sub_objects=[],
             raw_size=len(data),
         )
-    flags, unknown1 = struct.unpack_from('<II', data, 0)
-    num_extra_sub = data[8]
+    flags, unknown1, num_extra_sub = struct.unpack_from('<III', data, 0)
+    num_extra_sub &= 0xFF  # only lowest byte used for loop count, though malloc uses full uint32
     sub_transform_offset, sub_material_offset, lod_offset, mesh_handle = \
         struct.unpack_from('<IIII', data, 12)
 
@@ -438,6 +550,10 @@ def parse_mesh_header(data: bytes) -> MeshHeader:
     lod_poly_count: Optional[int] = None
     if lod_offset + 8 <= len(data):
         lod_max_draw_dist, lod_poly_count = struct.unpack_from('<II', data, lod_offset)
+
+    sub_objects = parse_sub_object_table(
+        data, num_extra_sub, sub_transform_offset, sub_material_offset,
+    )
 
     return MeshHeader(
         flags=flags,
@@ -449,6 +565,7 @@ def parse_mesh_header(data: bytes) -> MeshHeader:
         mesh_handle=mesh_handle,
         lod_max_draw_dist=lod_max_draw_dist,
         lod_poly_count=lod_poly_count,
+        sub_objects=sub_objects,
         raw_size=len(data),
     )
 
@@ -532,7 +649,42 @@ def walk_inner_chunks(data: bytes) -> dict:
 # ---------------------------------------------------------------------------
 
 def parse_sen(data: bytes) -> SenFile:
-    """Parse a SEN scene file.  Mirrors sub_432320 in the decompiled binary."""
+    """Parse a SEN scene file.
+
+    Mirrors sub_432320 in decompile.c (line 40953).
+
+    The outer loop reads 8-byte chunk headers and dispatches by FourCC tag.
+    Recognised tags and their decompile equivalents:
+
+      REV2  – file header validation and loop bound          (sub_432320, ~line 41058)
+      ONAM  – object name buffer (flat null-term strings)    (sub_432320, ~line 41135 / case 0x4D414E4F)
+      TNAM  – texture name table                             (sub_432320, ~line 41080 / case 0x4D414E54)
+                                                               -> allocated with sub_419870, ptr → dword_45E990
+      KEEP  – persistent mesh blob, inner-parsed by          (sub_432320, ~line 41071 / case 0x5045454B)
+                sub_432C00 (line 41410); must pass validation
+      TEMP  – temporary mesh blob (same inner format)        (sub_432320, ~line 41108 / case 0x504D4554)
+                validated by sub_432C00 then freed after use
+      COLS  – colour table (uint32 RGBA array)               (sub_432320, ~line 41121 / case 0x534C4F43)
+                                                               -> dword_45EB28 = ptr, dword_45EB2C = count
+      OBJI  – object instance table (32 bytes/entry)         (sub_432320, ~line 41171 / case 0x494A424F)
+                                                               -> dword_45EAA4 = ptr, dword_45EAAC = count
+      NAME  – inline mesh name string                        (sub_432320, ~line 41183 / case 0x454D414E)
+                                                               -> strcpy into name pool at dword_45EAB4
+      MESH  – mesh/display-list blob                         (sub_432320, ~line 41193 / case 0x4853454D)
+                                                               -> sub_419870 alloc, stored as (flags=0, ptr)
+                                                               -> relocation via sub_4320F0 (line 40780)
+      TANI  – UV texture animation records                   (sub_432320, ~line 41149 / case 0x494E4154)
+                                                               -> sub_434A90 (ticker, line 43223)
+                                                               -> sub_434B00 (record parser, line 43260)
+      MAPI  – material mapping table (16 bytes/entry)        (sub_432320, ~line 41157 / case 0x4950414D)
+                                                               -> dword_45EB20 = ptr, dword_45EB24 = count
+                                                               -> used by sub_432260 (line 40880) for
+                                                                  texture-name resolution
+      SUBO  – sub-object registration blob (opaque)          (sub_432320, ~line 41089 / case 0x4F425553)
+                                                               -> dword_45EB30 = ptr
+
+    Unknown FourCCs are silently skipped (sub_408D30 seek-forward, ~line 41105).
+    """
     r = Reader(data)
 
     # --- File header ---
@@ -541,11 +693,13 @@ def parse_sen(data: bytes) -> SenFile:
     # There is no separate payload to consume — sub-chunks begin immediately after
     # the 8-byte REV2 header.  The engine reads the 8-byte header and uses the
     # size value as the loop bound (for i=0; i < total; i += chunk_size + 8).
+    # Validated in sub_432320 line 41058: sub_408D10(v2, &v64, 8u)==8 && v64==844514642
     tag, size, _ = r.read_chunk_header()
     if tag != 'REV2':
         raise ValueError(f"Not a SEN file: expected 'REV2' magic, got {tag!r}")
     total_data_size = size   # size field = byte count of everything that follows
 
+    onam_buffer: bytes = b''
     object_names: list[str] = []
     texture_names: list[str] = []
     object_instances: list[ObjInstance] = []
@@ -571,36 +725,91 @@ def parse_sen(data: bytes) -> SenFile:
         payload = r.read(size)
 
         if tag == 'ONAM':
+            # sub_432320 case 0x4D414E4F (~line 41135):
+            #   dword_45E934 = dword_45E94C  (start of name pool write cursor)
+            #   sub_408D10(v2, dword_45E94C, Offset)  (read into scenery pool)
+            #   dword_45E94C += Offset
+            # The raw buffer is a flat sequence of null-terminated strings.
+            # OBJI records reference names by BYTE OFFSET into this buffer.
+            onam_buffer = payload
             object_names = parse_string_table(payload)
         elif tag == 'TNAM':
+            # sub_432320 case 0x4D414E54 (~line 41080):
+            #   sub_419870(0, Offset) -> heap alloc (not scenery-pool)
+            #   dword_45E990 = ptr, dword_45EAA8 = Offset (byte count)
+            # Used by sub_432260 (line 40880) to load texture handles by index.
             texture_names = parse_string_table(payload)
         elif tag == 'OBJI':
+            # sub_432320 case 0x494A424F (~line 41171):
+            #   sub_419870(0, Offset) -> heap alloc
+            #   dword_45EAA4 = ptr, dword_45EAAC = Offset >> 5  (count = size/32)
+            # Records are 32 bytes each.  First field is a BYTE OFFSET into the
+            # ONAM buffer (not an array index); resolved by pointer walk at ~line 41263.
             object_instances = parse_obji(payload)
         elif tag == 'MAPI':
+            # sub_432320 case 0x4950414D (~line 41157):
+            #   sub_419870(v4, Offset) -> scenery-pool alloc
+            #   dword_45EB20 = ptr, dword_45EB24 = Offset >> 4  (count = size/16)
+            # Records are 16 bytes each; used by sub_432260 to resolve texture
+            # handles (replaces material_index field with runtime handle).
             material_map = parse_mapi(payload)
         elif tag == 'COLS':
+            # sub_432320 case 0x534C4F43 (~line 41121):
+            #   sub_419870(v4, Offset) -> scenery-pool alloc
+            #   dword_45EB28 = ptr, dword_45EB2C = Offset >> 2  (count = size/4)
             colour_table = parse_cols(payload)
         elif tag == 'NAME':
-            # Inline name: null-terminated string for the last MESH entry
+            # sub_432320 case 0x454D414E (~line 41183):
+            #   sub_408D10(v2, Buffer, Offset) -> read into local 256-byte Buffer
+            #   strcpy((char *)dword_45EAB4, Buffer) -> copy into name pool
+            #   dword_45EAB4 += strlen(...) + 1   -> advance name pool write ptr
+            # The preceding MESH entry's slot (dword_45E948-8) is updated to
+            # point at this name.
             name = payload.split(b'\x00', 1)[0].decode('latin-1')
             mesh_entries.append(('name', name))
         elif tag == 'MESH':
+            # sub_432320 case 0x4853454D (~line 41193):
+            #   sub_419870(v4, Offset) -> scenery-pool alloc
+            #   Stored as (flags=0, ptr) pair in scene object table:
+            #     *(_DWORD *)(dword_45E948 + 4) = ptr
+            #     *(_DWORD *)dword_45E948 = 0
+            #     dword_45E948 += 8
+            #   Blob header relocated by sub_4320F0 (line 40780) after all
+            #   MESH/NAME pairs are loaded.
             mesh_entries.append(('mesh', parse_mesh_header(payload)))
         elif tag == 'TANI':
-            # sub_434A90 / sub_434B00: UV texture animation records.
-            # Separate from ANM opcode 5 (sub-mesh bone rotation via sub_430A90).
+            # sub_432320 case 0x494E4154 (~line 41149):
+            #   sub_419870(v4, Offset) -> scenery-pool alloc  (dword_45E940)
+            #   dword_45EAB0 = Offset  (byte count)
+            #   After loading, passed to sub_434A90 (UV anim ticker, line 43223)
+            #   which calls sub_434B00 (record walker, line 43260) per tick.
+            # UV texture scrolling — separate from ANM opcode 5 (sub_430A90).
             tani_entries.append(parse_tani(payload))
         elif tag == 'SUBO':
+            # sub_432320 case 0x4F425553 (~line 41089):
+            #   sub_419870(v4, Offset) -> scenery-pool alloc
+            #   dword_45EB30 = ptr
+            # Opaque blob passed to the engine's sub-object registration system.
             subo_entries.append(payload)
         elif tag == 'KEEP':
+            # sub_432320 case 0x5045454B (~line 41071):
+            #   sub_419870(v4, Offset) -> scenery-pool alloc (kept alive)
+            #   sub_432C00((int *)dword_45EAA0, dword_45EAA0 + Offset) must return 1
+            #   Inner chunks parsed by sub_432C00 (line 41410).
             keep_blob = payload
         elif tag == 'TEMP':
+            # sub_432320 case 0x504D4554 (~line 41108):
+            #   sub_419870(0, Offset) -> heap alloc (freed after processing)
+            #   sub_432C00(v27, (unsigned int)v27 + Offset) must return 1
+            #   Inner chunks parsed by sub_432C00 (line 41410).
             temp_blob = payload
         else:
+            # Unknown FourCC: sub_408D30(v2, Offset, 1) — seek forward (~line 41105)
             unknown_chunks.append(Chunk(fourcc=tag, offset=offset, size=size))
 
     return SenFile(
         total_data_size=total_data_size,
+        onam_buffer=onam_buffer,
         object_names=object_names,
         texture_names=texture_names,
         object_instances=object_instances,
@@ -811,29 +1020,16 @@ def print_summary(sen: SenFile, max_lines: int = 10) -> None:
     for i, name in truncated(sen.texture_names, "names"):
         print(f"  [{i:3d}] {name!r}")
 
-    # ONAM stores names as a flat null-terminated byte buffer;
-    # OBJI name_off is a byte offset into that buffer, not a list index.
-    onam_raw = b'\x00'.join(n.encode('latin-1') for n in sen.object_names)
-    if onam_raw:
-        onam_raw += b'\x00'
-
-    def resolve_name(byte_offset: int) -> str:
-        try:
-            end = onam_raw.index(b'\x00', byte_offset)
-            return onam_raw[byte_offset:end].decode('latin-1')
-        except (ValueError, IndexError):
-            return f'<off={byte_offset}>'
-
     print()
     print(f"Object instances / OBJI ({len(sen.object_instances)})")
     for i, obj in truncated(sen.object_instances, "instances"):
-        name = resolve_name(obj.name_offset) if onam_raw else f'<off={obj.name_offset}>'
+        name = sen.name_at_offset(obj.name_offset)
         print(
-            f"  [{i:3d}] {name:<14s} type={obj.type_name:<8s} "
+            f"  [{i:3d}] {name:<14s} type={obj.type_name:<16s} "
             f"mesh={obj.mesh_handle:3d}  "
             f"pos=({obj.x:9.1f}, {obj.y:8.1f}, {obj.z:8.1f})  "
             f"rot=({obj.rot_x:6d}, {obj.rot_y:6d}, {obj.rot_z:6d})  "
-            f"scene_idx={obj.scene_entry_idx}"
+            f"mesh_entry_idx={obj.mesh_entry_idx}"
         )
 
     print()
@@ -866,6 +1062,12 @@ def print_summary(sen: SenFile, max_lines: int = 10) -> None:
                 f"flags=0x{mh.flags:08X}  num_extra_sub={mh.num_extra_sub}  "
                 f"mesh_handle=0x{mh.mesh_handle:04X}{lod_info}"
             )
+            if mh.sub_objects:
+                for si, sub in enumerate(mh.sub_objects):
+                    print(
+                        f"        sub[{si}]: offset=({sub.offset_x},{sub.offset_y},{sub.offset_z})  "
+                        f"mat_idx={sub.material_index}"
+                    )
 
     print()
     print(f"TANI chunks ({len(sen.tani_entries)})")
@@ -926,18 +1128,38 @@ def to_dict(sen: SenFile) -> dict:
         'object_instances': [
             {
                 'name_offset': o.name_offset,
+                'name': sen.name_at_offset(o.name_offset),
                 'object_type': o.object_type,
                 'type_name': o.type_name,
                 'mesh_handle': o.mesh_handle,
                 'position': {'x': o.x, 'y': o.y, 'z': o.z},
                 'rotation': {'x': o.rot_x, 'y': o.rot_y, 'z': o.rot_z},
-                'scene_entry_idx': o.scene_entry_idx,
+                'mesh_entry_idx': o.mesh_entry_idx,
             }
             for o in sen.object_instances
         ],
         'material_map': [asdict(m) for m in sen.material_map],
         'colour_table': [f'0x{c:08X}' for c in sen.colour_table],
-        'mesh_entry_count': len(sen.mesh_entries),
+        'mesh_entries': [
+            (
+                {'type': 'name', 'name': val}
+                if kind == 'name'
+                else {
+                    'type': 'mesh',
+                    'flags': val.flags,
+                    'num_extra_sub': val.num_extra_sub,
+                    'sub_transform_offset': val.sub_transform_offset,
+                    'sub_material_offset': val.sub_material_offset,
+                    'lod_offset': val.lod_offset,
+                    'mesh_handle': val.mesh_handle,
+                    'lod_max_draw_dist': val.lod_max_draw_dist,
+                    'lod_poly_count': val.lod_poly_count,
+                    'sub_objects': [asdict(s) for s in val.sub_objects],
+                    'raw_size': val.raw_size,
+                }
+            )
+            for kind, val in sen.mesh_entries
+        ],
         'tani_entries': [
             [
                 {
