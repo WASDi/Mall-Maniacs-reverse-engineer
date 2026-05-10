@@ -7,64 +7,67 @@ import java.util.Map;
 
 public class MeshCharacter extends SenMesh {
 
-    public final int constant8; // == 280 (0x118)
-    public final int constant9; // == 0xFF430000
-    public final int constant10; // == 65529 (0xFFF9)
-    public final int constant11; // == -20971520 (0xFEC00000)
-    public final int constant12; // == 20447210 (0x137FFEA)
-    public final int boolean1; // == 0xFF57FF4C or 0xFF57FF4D
-    public final int constant13; // == 65502 (0xFFDE)
-    public final int constant14; // == 0x00D20000
-    public final int constant15; // == 20250624 (0x1350000)
-    public final int constant16; // == 0xB50000
-    public final int constant17; // == 20250624 (0x1350000)
-    public final int boolean2; // == 0xFF5700B3 or 0xFF5700B4
-    public final int constant18; // == 0x77F9FFDE
-    public final int constant19; // == 0x00D20000
-    public final int constant20; // == 0x01350000
-    public final int constant21; // == 0x00B50000
-    public final int constant22; // == 0x77BF0000
-    public final int constant23; // == 0x004F0000
-    public final int boolean3; // == 0x7782FFEC or 0x7782FFED
-    public final int boolean4; // == 0xFFA6 or 0xFFA7
-    public final int constant24; // == 0
-    public final int boolean5; // == 0x017CFFEC or 0x017CFFED
-    public final int constant25; // == 0x77E10000
-    public final int constant26; // == 0x0153FFF7
-    public final int constant27; // == 0x0138FFBE
-    public final int boolean6; // == 0x59 or 0x5A
-    public final int constant28; // == 0x01380000
-    public final int boolean7; // == 0x017C0013 or 0x017C0014
-    public final int constant29; // == 0x00890000
-    public final int constant30; // == 0x01530009
-    public final int constant31; // == 0x0135FFBE
-    public final int constant32; // == 0
-    public final int constant33; // == 1
-    public final int constant34; // == 1
-    public final int constant35; // == 3
-    public final int constant36; // == 4
-    public final int constant37; // == 1
-    public final int constant38; // == 6
-    public final int constant39; // == 7
-    public final int constant40; // == 0
-    public final int constant41; // == 0
-    public final int constant42; // == 0xA
-    public final int constant43; // == 0xB
-    public final int constant44; // == 0
-    public final int constant45; // == 0xD
-    public final int constant46; // == 0xE
-    public final int constant47; // == 10000000
+    public final int meshDataBaseSize; // == 280 (0x118) byte offset to vertex data from mesh start
+
+    public final int boneTransform_0_0; // == 0xFF430000
+    public final int boneTransform_0_1; // == 65529 (0xFFF9)
+    public final int boneTransform_0_2; // == -20971520 (0xFEC00000)
+    public final int boneTransform_1_0; // == 20447210 (0x137FFEA)
+    public final int boneTransform_1_1; // == 0xFF57FF4C or 0xFF57FF4D, bone angle diff by 1 unit
+    public final int boneTransform_1_2; // == 65502 (0xFFDE)
+    public final int boneTransform_2_0; // == 0x00D20000
+    public final int boneTransform_2_1; // == 20250624 (0x1350000)
+    public final int boneTransform_2_2; // == 0xB50000
+    public final int boneTransform_3_0; // == 20250624 (0x1350000)
+    public final int boneTransform_3_1; // == 0xFF5700B3 or 0xFF5700B4, bone angle diff by 1 unit
+    public final int boneTransform_3_2; // == 0x77F9FFDE
+    public final int boneTransform_4_0; // == 0x00D20000
+    public final int boneTransform_4_1; // == 0x01350000
+    public final int boneTransform_4_2; // == 0x00B50000
+    public final int boneTransform_5_0; // == 0x77BF0000
+    public final int boneTransform_5_1; // == 0x004F0000
+    public final int boneTransform_5_2; // == 0x7782FFEC or 0x7782FFED, bone angle diff by 1 unit
+    public final int boneTransform_6_0; // == 0xFFA6 or 0xFFA7, -90/-89 deg as int16
+    public final int boneTransform_6_1; // == 0
+    public final int boneTransform_6_2; // == 0x017CFFEC or 0x017CFFED, bone angle diff by 1 unit
+    public final int boneTransform_7_0; // == 0x77E10000
+    public final int boneTransform_7_1; // == 0x0153FFF7
+    public final int boneTransform_7_2; // == 0x0138FFBE
+    public final int boneTransform_8_0; // == 0x59 or 0x5A, 89/90 deg as int16
+    public final int boneTransform_8_1; // == 0x01380000
+    public final int boneTransform_8_2; // == 0x017C0013 or 0x017C0014, bone angle diff by 1 unit
+    public final int boneTransform_9_0; // == 0x00890000
+    public final int boneTransform_9_1; // == 0x01530009
+    public final int boneTransform_9_2; // == 0x0135FFBE
+    public final int boneTransformPadding; // == 0
+
+    public final int boneHierarchy_0; // == 1 bone type/parent ID
+    public final int boneHierarchy_1; // == 1
+    public final int boneHierarchy_2; // == 3
+    public final int boneHierarchy_3; // == 4
+    public final int boneHierarchy_4; // == 1
+    public final int boneHierarchy_5; // == 6
+    public final int boneHierarchy_6; // == 7
+    public final int boneHierarchy_7; // == 0  (unused slot)
+    public final int boneHierarchy_8; // == 0  (unused slot)
+    public final int boneHierarchy_9; // == 0xA
+    public final int boneHierarchy_10; // == 0xB
+    public final int boneHierarchy_11; // == 0  (unused slot)
+    public final int boneHierarchy_12; // == 0xD
+    public final int boneHierarchy_13; // == 0xE
+
+    public final int maxDrawDistance; // == 10000000
     public final int numVertices;
-    public final int constant48; // == 280
-    public final int constant49; // == 0
-    public final int ok_63; // == 280 + numVertices*8
+    public final int vertexDataOffset; // == 280
+    public final int reserved0; // == 0
+    public final int vertexDataEndOffset; // == 280 + numVertices*8
     public final int numSuboReferences;
-    public final int ok_65; // == 280 + numVertices*8
+    public final int suboRefsTableOffset; // == 280 + numVertices*8
     public final int numVertexGroups;
-    public final int _67; // 724 to 1280, dividable by 4. Very likely like _22 for object
-    public final int constant50; // == 0
-    public final int constant51; // == 0
-    public final int ok_70; // == 280 + numVertices*8
+    public final int faceGroupsCount; // 724 to 1280, dividable by 4
+    public final int reserved1; // == 0
+    public final int reserved2; // == 0
+    public final int vertexGroupDefOffset; // == 280 + numVertices*8
     public final Vertex[] vertices;
     public final int[] suboReferences;
     public final VertexGroupDefinition[] vertexGroupDefinitions;
@@ -76,64 +79,64 @@ public class MeshCharacter extends SenMesh {
     public MeshCharacter(String name, int bytesLeftUntilName, int meshIdx, int[] rawData) {
         super(name, bytesLeftUntilName, meshIdx, rawData);
         int idx = SHARED_DATA_SIZE;
-        constant8 = rawData[idx++];
-        constant9 = rawData[idx++];
-        constant10 = rawData[idx++];
-        constant11 = rawData[idx++];
-        constant12 = rawData[idx++];
-        boolean1 = rawData[idx++];
-        constant13 = rawData[idx++];
-        constant14 = rawData[idx++];
-        constant15 = rawData[idx++];
-        constant16 = rawData[idx++];
-        constant17 = rawData[idx++];
-        boolean2 = rawData[idx++];
-        constant18 = rawData[idx++];
-        constant19 = rawData[idx++];
-        constant20 = rawData[idx++];
-        constant21 = rawData[idx++];
-        constant22 = rawData[idx++];
-        constant23 = rawData[idx++];
-        boolean3 = rawData[idx++];
-        boolean4 = rawData[idx++];
-        constant24 = rawData[idx++];
-        boolean5 = rawData[idx++];
-        constant25 = rawData[idx++];
-        constant26 = rawData[idx++];
-        constant27 = rawData[idx++];
-        boolean6 = rawData[idx++];
-        constant28 = rawData[idx++];
-        boolean7 = rawData[idx++];
-        constant29 = rawData[idx++];
-        constant30 = rawData[idx++];
-        constant31 = rawData[idx++];
-        constant32 = rawData[idx++];
-        constant33 = rawData[idx++];
-        constant34 = rawData[idx++];
-        constant35 = rawData[idx++];
-        constant36 = rawData[idx++];
-        constant37 = rawData[idx++];
-        constant38 = rawData[idx++];
-        constant39 = rawData[idx++];
-        constant40 = rawData[idx++];
-        constant41 = rawData[idx++];
-        constant42 = rawData[idx++];
-        constant43 = rawData[idx++];
-        constant44 = rawData[idx++];
-        constant45 = rawData[idx++];
-        constant46 = rawData[idx++];
-        constant47 = rawData[idx++];
+        meshDataBaseSize = rawData[idx++];
+        boneTransform_0_0 = rawData[idx++];
+        boneTransform_0_1 = rawData[idx++];
+        boneTransform_0_2 = rawData[idx++];
+        boneTransform_1_0 = rawData[idx++];
+        boneTransform_1_1 = rawData[idx++];
+        boneTransform_1_2 = rawData[idx++];
+        boneTransform_2_0 = rawData[idx++];
+        boneTransform_2_1 = rawData[idx++];
+        boneTransform_2_2 = rawData[idx++];
+        boneTransform_3_0 = rawData[idx++];
+        boneTransform_3_1 = rawData[idx++];
+        boneTransform_3_2 = rawData[idx++];
+        boneTransform_4_0 = rawData[idx++];
+        boneTransform_4_1 = rawData[idx++];
+        boneTransform_4_2 = rawData[idx++];
+        boneTransform_5_0 = rawData[idx++];
+        boneTransform_5_1 = rawData[idx++];
+        boneTransform_5_2 = rawData[idx++];
+        boneTransform_6_0 = rawData[idx++];
+        boneTransform_6_1 = rawData[idx++];
+        boneTransform_6_2 = rawData[idx++];
+        boneTransform_7_0 = rawData[idx++];
+        boneTransform_7_1 = rawData[idx++];
+        boneTransform_7_2 = rawData[idx++];
+        boneTransform_8_0 = rawData[idx++];
+        boneTransform_8_1 = rawData[idx++];
+        boneTransform_8_2 = rawData[idx++];
+        boneTransform_9_0 = rawData[idx++];
+        boneTransform_9_1 = rawData[idx++];
+        boneTransform_9_2 = rawData[idx++];
+        boneTransformPadding = rawData[idx++];
+        boneHierarchy_0 = rawData[idx++];
+        boneHierarchy_1 = rawData[idx++];
+        boneHierarchy_2 = rawData[idx++];
+        boneHierarchy_3 = rawData[idx++];
+        boneHierarchy_4 = rawData[idx++];
+        boneHierarchy_5 = rawData[idx++];
+        boneHierarchy_6 = rawData[idx++];
+        boneHierarchy_7 = rawData[idx++];
+        boneHierarchy_8 = rawData[idx++];
+        boneHierarchy_9 = rawData[idx++];
+        boneHierarchy_10 = rawData[idx++];
+        boneHierarchy_11 = rawData[idx++];
+        boneHierarchy_12 = rawData[idx++];
+        boneHierarchy_13 = rawData[idx++];
+        maxDrawDistance = rawData[idx++];
         numVertices = rawData[idx++];
-        constant48 = rawData[idx++];
-        constant49 = rawData[idx++];
-        ok_63 = rawData[idx++];
+        vertexDataOffset = rawData[idx++];
+        reserved0 = rawData[idx++];
+        vertexDataEndOffset = rawData[idx++];
         numSuboReferences = rawData[idx++];
-        ok_65 = rawData[idx++];
+        suboRefsTableOffset = rawData[idx++];
         numVertexGroups = rawData[idx++];
-        _67 = rawData[idx++];
-        constant50 = rawData[idx++];
-        constant51 = rawData[idx++];
-        ok_70 = rawData[idx++];
+        faceGroupsCount = rawData[idx++];
+        reserved1 = rawData[idx++];
+        reserved2 = rawData[idx++];
+        vertexGroupDefOffset = rawData[idx++];
 
         vertices = VerticesFactory.parseVertices(idx, numVertices, rawData);
         idx += numVertices * 2;
