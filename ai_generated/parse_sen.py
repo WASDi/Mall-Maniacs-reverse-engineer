@@ -1,9 +1,11 @@
 """
 SEN scene file parser
-Reverse engineered from sub_432320 in the decompiled game binary.
+Reverse engineered from sub_432320 in the decompiled game binary (Visual C++, x86).
 
-File format overview
---------------------
+════════════════════════════════════════════════════════════════════════════════
+FILE FORMAT OVERVIEW
+════════════════════════════════════════════════════════════════════════════════
+
 SEN is a chunked binary format (similar in spirit to IFF/RIFF).
 Every chunk header is 8 bytes:
 
@@ -14,8 +16,10 @@ The file starts with a mandatory REV2 header chunk, then an arbitrary
 sequence of data chunks.  The chunks are read in one sequential pass;
 order matters for cross-chunk references but is otherwise free.
 
-Chunk types
------------
+════════════════════════════════════════════════════════════════════════════════
+CHUNK TYPES
+════════════════════════════════════════════════════════════════════════════════
+
 REV2  File header.  Payload = uint32 total_data_size (bytes following
       the header, i.e. file_size - 8).  Must be the first chunk.
 
@@ -51,7 +55,7 @@ COLS  Colour table.  Payload = array of uint32 RGBA values.
 OBJI  Object instance table.  Payload = array of 32-byte records.
       Entry count = payload_size / 32.
       Each record (all little-endian):
-          [+00]  int32   reserved / name offset (resolved from ONAM)
+          [+00]  int32   reserved / name offset (byte offset into ONAM buffer)
           [+04]  int32   object type  (1 = standard mesh object,
                                        3 = sentinel / end marker,
                                        other = billboard/sprite type)
@@ -73,7 +77,36 @@ MESH  Mesh reference.  Payload = opaque mesh-pointer / index data loaded
       into the scenery object table as a (flags=0, ptr) pair.
 
 TANI  Texture animation reference.  Payload = texture-animation info
-      block fed to sub_434A90.
+      block fed to sub_434A90 / sub_434B00.
+
+      ── TANI / UV animation detail ──────────────────────────────────────
+      This is a SEPARATE system from ANM opcode 5 (sub-mesh rotation).
+      TANI drives UV texture scrolling on static mesh materials;
+      ANM opcode 5 drives 3-D bone rotation via sub_430A90.
+
+      Each TANI payload is a stream of variable-length records (sub_434B00):
+          [+00]  int8    major_u_step    added to U when v_counter wraps
+          [+01]  int8    major_v_step    added to V when v_counter wraps
+          [+02]  int8    minor_u_step    added to U each sub-advance
+          [+03]  int8    minor_v_step    added to V each sub-advance
+          [+04]  uint8   tick_period     game-ticks between sub-advances
+          [+05]  uint8   v_wrap_count    sub-advances before major step
+          [+06]  uint8   tick_counter    runtime state (0 in file)
+          [+07]  uint8   subtick_counter runtime state (0 in file)
+          [+08]  uint16  num_textures
+          [+10]  uint16[num_textures]  texture_indices (MAPI row indices)
+
+      The TANI update loop (sub_434A90, called once per game tick):
+          tick_counter++
+          if tick_counter >= tick_period:
+              tick_counter = 0
+              subtick_counter++
+              for each texture_index:
+                  apply minor_u_step, minor_v_step to UV offset
+              if subtick_counter >= v_wrap_count:
+                  subtick_counter = 0
+                  for each texture_index:
+                      apply major_u_step, major_v_step to UV offset
 
 MAPI  Material mapping table.  Payload = array of 16-byte records.
       Entry count = payload_size / 16.
@@ -89,8 +122,10 @@ SUBO  Sub-object data block.  Payload is an opaque blob passed directly
 
 Unknown FourCCs are silently skipped (seeked past) by the engine.
 
+════════════════════════════════════════════════════════════════════════════════
 KEEP inner-chunk parsing (sub_432C00)
---------------------------------------
+════════════════════════════════════════════════════════════════════════════════
+
 The KEEP / TEMP payload is itself walked as a stream of the same
 chunk-header records.  The inner parser handles:
     ONAM (0x4F4E414D)  -> dword_45E934 = start of name buffer
@@ -141,9 +176,15 @@ class Chunk:
     offset: int       # file offset of the chunk header
     size: int         # payload byte count
 
+
 @dataclass
 class ObjInstance:
-    """32-byte OBJI record"""
+    """32-byte OBJI record.
+
+    Parsed from sub_432320 (the main SEN loader).  The 'name_offset' field is
+    a byte offset into the flat ONAM string buffer (not a list index).
+    'object_type' values: 1 = standard mesh, 3 = end sentinel, other = billboard.
+    """
     name_offset: int
     object_type: int
     mesh_handle: int
@@ -152,20 +193,27 @@ class ObjInstance:
     z: float
     rot_x: int
     rot_y: int
-    rot_z: int
+    rot_z: int           # also sprite-frame index for billboard objects
     scene_entry_idx: int
 
     @property
     def type_name(self) -> str:
         return {1: 'mesh', 3: 'end_sentinel'}.get(self.object_type, f'type_{self.object_type}')
 
+
 @dataclass
 class MatEntry:
-    """16-byte MAPI record"""
+    """16-byte MAPI record.
+
+    'material_index' is the primary lookup key used by sub_432260 to find the
+    corresponding texture-name entry.  'texture_handle' is a runtime placeholder
+    filled at load time and meaningless in the raw file.
+    """
     material_index: int
     flags: int
     texture_handle: int   # placeholder; resolved at runtime
     reserved: int
+
 
 @dataclass
 class MeshHeader:
@@ -187,6 +235,7 @@ class MeshHeader:
         [+24]  uint32  mesh_handle    display-list handle / render-object index
                                       (v9[6], runtime value patched at load time)
         [+28]  uint32  zero
+
     LOD descriptor at lod_offset (v9[5]):
         [+00]  uint32  max_draw_dist  (checked against dword_45E634)
         [+04]  uint32  poly_count     (compared to dword_45E634 for LOD selection)
@@ -209,6 +258,10 @@ class TaniEntry:
 
     Parsed from sub_434B00 in the decompiled binary.
 
+    This drives UV texture scrolling on static mesh materials — a completely
+    separate system from ANM opcode 5 (which rotates sub-mesh bones via
+    sub_430A90).
+
     Layout per record:
         [+00]  int8    major_u_step    added to u-offset when v-counter wraps
         [+01]  int8    major_v_step    added to v-offset when v-counter wraps
@@ -227,8 +280,8 @@ class TaniEntry:
     minor_v_step: int
     tick_period: int
     v_wrap_count: int
-    tick_counter: int
-    subtick_counter: int
+    tick_counter: int       # runtime state — 0 in file, mutable during play
+    subtick_counter: int    # runtime state — 0 in file, mutable during play
     texture_indices: list[int]
 
 
@@ -239,13 +292,14 @@ class SenFile:
     texture_names: list[str]
     object_instances: list[ObjInstance]
     material_map: list[MatEntry]
-    colour_table: list[int]      # raw uint32 RGBA values
-    mesh_entries: list           # list of ('name', str) | ('mesh', MeshHeader) tuples
+    colour_table: list[int]              # raw uint32 RGBA values
+    mesh_entries: list                   # list of ('name', str) | ('mesh', MeshHeader)
     tani_entries: list[list[TaniEntry]]  # each TANI chunk = list of TaniEntry records
-    subo_entries: list[bytes]    # raw payloads (opaque — engine sub-object reg table)
-    keep_blob: Optional[bytes]   # raw KEEP payload
-    temp_blob: Optional[bytes]   # raw TEMP payload
+    subo_entries: list[bytes]            # raw payloads (opaque — engine sub-object reg)
+    keep_blob: Optional[bytes]           # raw KEEP payload
+    temp_blob: Optional[bytes]           # raw TEMP payload
     unknown_chunks: list[Chunk]
+
 
 # ---------------------------------------------------------------------------
 # Reader helper
@@ -296,6 +350,7 @@ class Reader:
         tag = FOURCC.get(raw, raw.decode('latin-1', errors='replace'))
         return tag, size, offset
 
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -314,6 +369,7 @@ def parse_string_table(data: bytes) -> list[str]:
     if current:
         strings.append(current.decode('latin-1'))
     return strings
+
 
 def parse_obji(data: bytes) -> list[ObjInstance]:
     if len(data) % 32 != 0:
@@ -338,6 +394,7 @@ def parse_obji(data: bytes) -> list[ObjInstance]:
         ))
     return entries
 
+
 def parse_mapi(data: bytes) -> list[MatEntry]:
     if len(data) % 16 != 0:
         print(
@@ -351,15 +408,18 @@ def parse_mapi(data: bytes) -> list[MatEntry]:
         entries.append(MatEntry(mat_idx, flags, tex_handle, reserved))
     return entries
 
+
 def parse_cols(data: bytes) -> list[int]:
     count = len(data) // 4
     return list(struct.unpack_from(f'<{count}I', data))
+
 
 def parse_mesh_header(data: bytes) -> MeshHeader:
     """Parse the header of a MESH payload blob.
 
     The blob is an engine mesh-object descriptor.  The first 32 bytes form a
-    fixed header; the lod descriptor lives at the offset stored in lod_offset.
+    fixed header; the LOD descriptor lives at the offset stored in lod_offset.
+    Mirrors the load path in sub_430200 / sub_432320.
     """
     if len(data) < 28:
         return MeshHeader(
@@ -398,8 +458,11 @@ def parse_tani(data: bytes) -> list[TaniEntry]:
 
     Each record is variable-length (10 + 2 * num_textures bytes).
     The loop mirrors sub_434B00 in the decompiled binary: it walks the buffer
-    until fewer than 5 bytes remain (the minimum non-empty record needs at
+    until fewer than 10 bytes remain (the minimum non-empty record needs at
     least the 10-byte fixed header).
+
+    These records are consumed by sub_434A90 (the per-tick TANI update),
+    which is completely separate from ANM playback (sub_434090 / sub_434290).
     """
     entries: list[TaniEntry] = []
     pos = 0
@@ -408,9 +471,9 @@ def parse_tani(data: bytes) -> list[TaniEntry]:
         major_v = struct.unpack_from('b', data, pos + 1)[0]
         minor_u = struct.unpack_from('b', data, pos + 2)[0]
         minor_v = struct.unpack_from('b', data, pos + 3)[0]
-        tick_period    = data[pos + 4]
-        v_wrap_count   = data[pos + 5]
-        tick_counter   = data[pos + 6]
+        tick_period     = data[pos + 4]
+        v_wrap_count    = data[pos + 5]
+        tick_counter    = data[pos + 6]
         subtick_counter = data[pos + 7]
         num_tex = struct.unpack_from('<H', data, pos + 8)[0]
         pos += 10
@@ -439,9 +502,10 @@ def parse_tani(data: bytes) -> list[TaniEntry]:
 # ---------------------------------------------------------------------------
 
 def walk_inner_chunks(data: bytes) -> dict:
-    """
-    Walk the inner chunk stream inside a KEEP or TEMP blob.
-    Returns a dict of tag -> payload bytes for recognised tags.
+    """Walk the inner chunk stream inside a KEEP or TEMP blob.
+
+    Mirrors sub_432C00 in the decompiled binary.
+    Returns a dict of tag -> list[payload_bytes] for all recognised tags.
     """
     result: dict[str, list[bytes]] = {}
     pos = 0
@@ -462,11 +526,13 @@ def walk_inner_chunks(data: bytes) -> dict:
         pos += size
     return result
 
+
 # ---------------------------------------------------------------------------
 # Main parser
 # ---------------------------------------------------------------------------
 
 def parse_sen(data: bytes) -> SenFile:
+    """Parse a SEN scene file.  Mirrors sub_432320 in the decompiled binary."""
     r = Reader(data)
 
     # --- File header ---
@@ -485,8 +551,8 @@ def parse_sen(data: bytes) -> SenFile:
     object_instances: list[ObjInstance] = []
     material_map: list[MatEntry] = []
     colour_table: list[int] = []
-    mesh_entries: list[bytes] = []
-    tani_entries: list[bytes] = []
+    mesh_entries: list = []
+    tani_entries: list[list[TaniEntry]] = []
     subo_entries: list[bytes] = []
     keep_blob: Optional[bytes] = None
     temp_blob: Optional[bytes] = None
@@ -517,13 +583,12 @@ def parse_sen(data: bytes) -> SenFile:
         elif tag == 'NAME':
             # Inline name: null-terminated string for the last MESH entry
             name = payload.split(b'\x00', 1)[0].decode('latin-1')
-            if mesh_entries:
-                # annotate as a tuple; the raw bytes are still in mesh_entries
-                pass  # name is appended below alongside mesh
             mesh_entries.append(('name', name))
         elif tag == 'MESH':
             mesh_entries.append(('mesh', parse_mesh_header(payload)))
         elif tag == 'TANI':
+            # sub_434A90 / sub_434B00: UV texture animation records.
+            # Separate from ANM opcode 5 (sub-mesh bone rotation via sub_430A90).
             tani_entries.append(parse_tani(payload))
         elif tag == 'SUBO':
             subo_entries.append(payload)
@@ -548,6 +613,176 @@ def parse_sen(data: bytes) -> SenFile:
         temp_blob=temp_blob,
         unknown_chunks=unknown_chunks,
     )
+
+
+# ---------------------------------------------------------------------------
+# TANI animation playback engine
+# ---------------------------------------------------------------------------
+
+@dataclass
+class TextureUVState:
+    """Runtime UV offset for one MAPI-indexed texture slot.
+
+    The engine stores UV offsets as integer scroll values applied to the
+    material's UV coordinates.  Signs and scaling are renderer-dependent;
+    these values mirror the counters tracked per-entry in sub_434A90.
+    """
+    texture_index: int   # index into the SEN MAPI table
+    u_offset: int = 0
+    v_offset: int = 0
+
+
+@dataclass
+class TaniAnimationState:
+    """Runtime state for one TaniEntry during UV animation playback.
+
+    Mirrors the mutable fields of TaniEntry as they are updated by
+    sub_434A90 each game tick.  The file-resident TaniEntry is left
+    unmodified; this object holds the live counters.
+
+    Update logic (sub_434A90, one call per game tick per TANI chunk):
+        tick_counter++
+        if tick_counter >= tick_period:
+            tick_counter = 0
+            subtick_counter++
+            for each texture_index in texture_indices:
+                u_offset += minor_u_step
+                v_offset += minor_v_step
+            if subtick_counter >= v_wrap_count:
+                subtick_counter = 0
+                for each texture_index in texture_indices:
+                    u_offset += major_u_step
+                    v_offset += major_v_step
+    """
+    entry: TaniEntry
+    tick_counter: int = 0
+    subtick_counter: int = 0
+    # Per-texture UV offsets, indexed by position in entry.texture_indices.
+    uv_states: list[TextureUVState] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        if not self.uv_states:
+            self.uv_states = [
+                TextureUVState(texture_index=idx)
+                for idx in self.entry.texture_indices
+            ]
+
+    def step(self) -> None:
+        """Advance one game tick.  Mirrors sub_434A90."""
+        self.tick_counter += 1
+        if self.tick_counter < self.entry.tick_period:
+            return
+
+        # Sub-advance fires
+        self.tick_counter = 0
+        self.subtick_counter += 1
+
+        for uv in self.uv_states:
+            uv.u_offset += self.entry.minor_u_step
+            uv.v_offset += self.entry.minor_v_step
+
+        if self.subtick_counter >= self.entry.v_wrap_count:
+            self.subtick_counter = 0
+            for uv in self.uv_states:
+                uv.u_offset += self.entry.major_u_step
+                uv.v_offset += self.entry.major_v_step
+
+    def reset(self) -> None:
+        """Reset to initial state (tick_counter = subtick_counter = 0, all UVs zero)."""
+        self.tick_counter = 0
+        self.subtick_counter = 0
+        for uv in self.uv_states:
+            uv.u_offset = 0
+            uv.v_offset = 0
+
+    def summary(self) -> str:
+        lines = [
+            f"  tick={self.tick_counter}/{self.entry.tick_period}"
+            f"  sub={self.subtick_counter}/{self.entry.v_wrap_count}"
+            f"  minor=({self.entry.minor_u_step},{self.entry.minor_v_step})"
+            f"  major=({self.entry.major_u_step},{self.entry.major_v_step})"
+        ]
+        for uv in self.uv_states:
+            lines.append(f"    tex[{uv.texture_index}]: u={uv.u_offset}  v={uv.v_offset}")
+        return "\n".join(lines)
+
+
+@dataclass
+class SceneTaniState:
+    """Playback state for all TANI chunks in a loaded SEN scene.
+
+    Each TANI chunk in the SEN file becomes one list of TaniAnimationState
+    objects (one per record in that chunk).
+
+    Usage:
+        sen = parse_sen(Path("scene.sen").read_bytes())
+        scene_tani = make_tani_state(sen)
+        for tick in range(300):          # simulate 300 game ticks
+            scene_tani.step()
+        scene_tani.print_summary()
+
+    To read current UV offsets for a specific MAPI material index:
+        for chunk_states in scene_tani.chunks:
+            for anim in chunk_states:
+                for uv in anim.uv_states:
+                    if uv.texture_index == my_mat_idx:
+                        print(uv.u_offset, uv.v_offset)
+    """
+    chunks: list[list[TaniAnimationState]]
+    tick: int = 0
+
+    def step(self) -> None:
+        """Advance all TANI animations by one game tick."""
+        for chunk in self.chunks:
+            for anim in chunk:
+                anim.step()
+        self.tick += 1
+
+    def reset(self) -> None:
+        """Reset all TANI animations to their initial state."""
+        self.tick = 0
+        for chunk in self.chunks:
+            for anim in chunk:
+                anim.reset()
+
+    def uv_offset_for(self, mapi_index: int) -> Optional[tuple[int, int]]:
+        """Return the current (u, v) UV offset for a given MAPI material index.
+
+        Returns the offset from the first TaniAnimationState that targets
+        that index, or None if no TANI record references it.
+        """
+        for chunk in self.chunks:
+            for anim in chunk:
+                for uv in anim.uv_states:
+                    if uv.texture_index == mapi_index:
+                        return (uv.u_offset, uv.v_offset)
+        return None
+
+    def print_summary(self) -> None:
+        print(f"TANI state at tick {self.tick}:")
+        for ci, chunk in enumerate(self.chunks):
+            print(f"  Chunk {ci} ({len(chunk)} record(s)):")
+            for ai, anim in enumerate(chunk):
+                print(f"    Record {ai}:")
+                print(anim.summary())
+
+
+def make_tani_state(sen: SenFile) -> SceneTaniState:
+    """Construct a fresh SceneTaniState for all TANI chunks in a SEN file.
+
+    Usage:
+        sen = parse_sen(data)
+        state = make_tani_state(sen)
+        for _ in range(60):
+            state.step()
+        state.print_summary()
+    """
+    chunks = [
+        [TaniAnimationState(entry=entry) for entry in chunk]
+        for chunk in sen.tani_entries
+    ]
+    return SceneTaniState(chunks=chunks)
+
 
 # ---------------------------------------------------------------------------
 # Pretty printer
@@ -634,6 +869,8 @@ def print_summary(sen: SenFile, max_lines: int = 10) -> None:
 
     print()
     print(f"TANI chunks ({len(sen.tani_entries)})")
+    print(f"  (UV texture scroll animation — sub_434A90/sub_434B00)")
+    print(f"  (Separate from ANM opcode-5 sub-mesh rotation — sub_430A90)")
     for i, entries in truncated(sen.tani_entries, "chunks"):
         print(f"  [{i:3d}] {len(entries)} animated-UV record(s):")
         for j, te in enumerate(entries):
@@ -701,12 +938,27 @@ def to_dict(sen: SenFile) -> dict:
         'material_map': [asdict(m) for m in sen.material_map],
         'colour_table': [f'0x{c:08X}' for c in sen.colour_table],
         'mesh_entry_count': len(sen.mesh_entries),
-        'tani_entry_count': len(sen.tani_entries),
+        'tani_entries': [
+            [
+                {
+                    'major_u_step': e.major_u_step,
+                    'major_v_step': e.major_v_step,
+                    'minor_u_step': e.minor_u_step,
+                    'minor_v_step': e.minor_v_step,
+                    'tick_period': e.tick_period,
+                    'v_wrap_count': e.v_wrap_count,
+                    'texture_indices': e.texture_indices,
+                }
+                for e in chunk
+            ]
+            for chunk in sen.tani_entries
+        ],
         'subo_entry_count': len(sen.subo_entries),
         'keep_blob_size': len(sen.keep_blob) if sen.keep_blob else None,
         'temp_blob_size': len(sen.temp_blob) if sen.temp_blob else None,
         'unknown_chunks': [asdict(ch) for ch in sen.unknown_chunks],
     }
+
 
 # ---------------------------------------------------------------------------
 # CLI
@@ -715,19 +967,25 @@ def to_dict(sen: SenFile) -> dict:
 def main() -> None:
     import argparse
 
-    parser = argparse.ArgumentParser(description="Parse a game SEN scene file.")
+    parser = argparse.ArgumentParser(
+        description="Parse and optionally simulate a game SEN scene file."
+    )
     parser.add_argument("file", help="Path to the .sen file")
     parser.add_argument(
         "--json", action="store_true",
-        help="Output as JSON instead of the human-readable summary"
+        help="Output as JSON instead of the human-readable summary",
     )
     parser.add_argument(
         "-N", "--max-lines", metavar="N", type=int, default=10,
-        help="Maximum lines printed per section in the summary (default: 10; 0 = unlimited)"
+        help="Maximum lines printed per section in the summary (default: 10; 0 = unlimited)",
+    )
+    parser.add_argument(
+        "--tani-play", metavar="TICKS", type=int, default=0,
+        help="Simulate TICKS game ticks of TANI UV animation and print the result",
     )
     parser.add_argument(
         "--out", metavar="FILE",
-        help="Write output to FILE instead of stdout"
+        help="Write output to FILE instead of stdout",
     )
     args = parser.parse_args()
 
@@ -744,7 +1002,18 @@ def main() -> None:
         print(f"Parse error: {exc}", file=sys.stderr)
         sys.exit(1)
 
-    if args.json:
+    if args.tani_play > 0:
+        state = make_tani_state(sen)
+        for _ in range(args.tani_play):
+            state.step()
+        import io
+        buf = io.StringIO()
+        old = sys.stdout
+        sys.stdout = buf
+        state.print_summary()
+        sys.stdout = old
+        output = buf.getvalue()
+    elif args.json:
         output = json.dumps(to_dict(sen), indent=2)
     else:
         max_lines = args.max_lines if args.max_lines > 0 else float('inf')

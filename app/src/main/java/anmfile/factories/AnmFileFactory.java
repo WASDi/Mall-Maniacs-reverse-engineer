@@ -5,7 +5,11 @@ import anmfile.parts.Keyframe;
 import anmfile.parts.MeshEntry;
 import anmfile.parts.Track;
 
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -111,5 +115,22 @@ public class AnmFileFactory {
         byte[] bytes = new byte[length];
         buffer.get(bytes);
         return new String(bytes, StandardCharsets.ISO_8859_1);
+    }
+
+    public static AnmFile fromFile(String filePath) throws IOException {
+        RandomAccessFile aFile = new RandomAccessFile(filePath, "r");
+        FileChannel inChannel = aFile.getChannel();
+        long fileSize = inChannel.size();
+        ByteBuffer buffer = ByteBuffer.allocate((int) fileSize);
+        inChannel.read(buffer);
+        buffer.flip();
+        buffer.order(ByteOrder.LITTLE_ENDIAN);
+
+        AnmFile anmFile = AnmFileFactory.parseFromBufferPosition(buffer);
+
+        inChannel.close();
+        aFile.close();
+
+        return anmFile;
     }
 }
