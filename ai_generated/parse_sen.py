@@ -81,6 +81,42 @@ NAME  Inline name string.  Payload = null-terminated name for the
 MESH  Mesh reference.  Payload = opaque mesh-pointer / index data loaded
       into the scenery object table as a (flags=0, ptr) pair.
 
+      Each MESH blob describes one mesh object in the scene.  See MeshHeader
+      for the full layout.  Key fields:
+          lod_level_count  (at +4)  = number of LOD levels (always 1 observed)
+          num_extra_sub    (at +8)  = extra sub-objects beyond root (low byte only)
+          sub_transform_offset      = table of per-sub position offsets (8 bytes/entry)
+          sub_material_offset       = table of per-sub material indices (4 bytes/entry)
+          lod_offset                = LOD descriptor table (48 bytes/level):
+              [+0] max_draw_dist, [+4] vertex_count
+
+      ── HOW ANM ANIMATIONS ARE APPLIED TO MESH SUB-OBJECTS ───────────────
+      ANM files drive character animation via opcode 5 keyframes.  The
+      connection between ANM mesh entries and SEN MESH sub-objects works as:
+
+        1. ANM file contains a mesh table: each entry has a scene-object NAME
+           and a sub_obj_idx (the sub-object slot 0-N within that scene object).
+
+        2. At ANM load time (sub_433A90):
+             - sub_431E20(mesh_name) resolves the name → runtime scene-object ptr
+             - sub_obj_idx is stored as-is into a temporary array (v61)
+             - For each opcode-5 keyframe in the ANM:
+                 in-mem[+1] = v61[mesh_idx] (low byte) = sub_obj_idx
+
+        3. At playback time (sub_434090, each game tick):
+             - sub_430A90(scene_obj, sub_obj_idx, rot_x, rot_y, rot_z, mode=2)
+             - Writes int16 Euler angles into:
+                 *(scene_obj+20) + 112 * sub_obj_idx + [+0..+4]
+             - Clears dirty flags at [+10], [+11]
+
+        4. The scene-object pointer (scene_obj) is bound at ANM load time via
+           sub_433A50(filename, root_bone_handle, scene_object_ptr).
+           a3 = the scene-object ptr (stored at v56[6]).
+
+        5. sub-objects 0..num_extra_sub correspond to body segments in order:
+             sub[0] = root (body, no transform-table entry)
+             sub[1..N] = limbs, head, etc. from sub_transform/sub_material tables
+
 TANI  Texture animation reference.  Payload = texture-animation info
       block fed to sub_434A90 / sub_434B00.
 
@@ -122,8 +158,11 @@ MAPI  Material mapping table.  Payload = array of 16-byte records.
           [+08]  int32   texture handle placeholder (filled at load time)
           [+12]  int32   reserved / padding
 
-SUBO  Sub-object data block.  Payload is an opaque blob passed directly
-      to the engine's sub-object registration function.
+SUBO  Sub-object data block.  *** DEAD DATA — stored but never read. ***
+      The pointer is saved to dword_45EB30 (sub_432320 ~line 41089;
+      sub_432C00 ~line 41438) and never dereferenced in decompile.c or
+      gxSoft.c.  In CHARACTERS.SEN: 36 instances × 948 bytes each.
+      Internal structure of the 948-byte per-instance blocks is unknown.
 
 Unknown FourCCs are silently skipped (seeked past) by the engine.
 
@@ -140,7 +179,7 @@ chunk-header records.  The inner parser handles:
                           dword_45EB2C = count (size >> 2)
     MAPI (0x4D415049)  -> dword_45EB20 = material map ptr,
                           dword_45EB24 = count (size >> 4)
-    SUBO (0x5355424F)  -> dword_45EB30 = sub-object ptr
+    SUBO (0x5355424F)  -> dword_45EB30 = ptr (SET BUT NEVER READ — dead data)
 
 All integers are little-endian.
 """
@@ -239,23 +278,31 @@ class SubObjectEntry:
     The root sub-object (index 0) does NOT have a table entry — it uses
     identity transform implicitly (zero offset, identity rotation/scale).
 
-    Position offset table entry (8 bytes):
+    This entry represents sub-object slot i+1 (0-indexed), where i is its
+    position in the list.  ANM opcode-5 keyframes target sub-objects by their
+    slot index (0 = root, 1..N = extra subs from this table).
+
+    Position offset table entry (8 bytes per entry at sub_transform_offset):
         [+0]  int16  offset_x   sub-object centre relative to root origin
         [+2]  int16  offset_y
         [+4]  int16  offset_z
-        [+6]  int16  padding
+        [+6]  int16  (not read by sub_430200; may be renderer metadata)
 
-    Material table entry (4 bytes):
-        [+0]  int32  material_index
+    Material table entry (4 bytes per entry at sub_material_offset):
+        [+0]  uint32  material_index
 
-    Consumption in sub_430200 (decompile.c):
-      - The three int16s are sign-extended and stored as dwords at
-        offsets +16, +20, +24 within each sub-object's 112-byte transform
-        block.  sub_4303C0 reads these fields for bounding-sphere calcs:
-          sqrt(offset_x² + offset_y² + offset_z²) + base_radius
-      - Rotation words at offsets +0, +2, +4 of the same block are
-        initialised to zero (identity) and can be modified at runtime by
-        ANM opcode-5 animation (sub_430A90).
+    Consumption in sub_430200 (decompile.c lines 39359-39362):
+      - The three int16s are sign-extended to int32 and stored at offsets
+        +16, +20, +24 within the 112-byte runtime sub-object transform block:
+            block[+16] = offset_x  (int32)
+            block[+20] = offset_y  (int32)
+            block[+24] = offset_z  (int32)
+      - sub_4303C0 reads these for bounding-sphere calculations:
+          radius = sqrt(offset_x² + offset_y² + offset_z²) + base_radius
+      - The material_index is stored at block[+12] (int32).
+      - Rotation words at block[+0, +2, +4] are initialised to 0 (identity)
+        and are later written by ANM opcode-5 animation via sub_430A90.
+      - Scale at block[+6] (float) is initialised to 1.0.
     """
     offset_x: int
     offset_y: int
@@ -267,34 +314,92 @@ class SubObjectEntry:
 class MeshHeader:
     """Parsed header from a MESH payload blob.
 
-    Layout (all little-endian):
-        [+00]  uint32  flags          (always 1 in observed data)
-        [+04]  uint32  unknown1       (always 1 in observed data)
-        [+08]  uint32  num_extra_sub  extra sub-objects beyond the root
-                                      (read as full uint32 in malloc, used as byte in loop)
+    The blob is loaded wholesale into memory and then relocated in-place by
+    sub_4320F0 (all offset fields become absolute pointers).  sub_430200
+    allocates a runtime scene-object block of size:
+        112 * num_extra_sub + 168   (= 56 + 112 * total_sub_count)
+
+    Fixed header layout (all little-endian, offsets relative to blob start):
+        [+00]  uint32  flags             (always 1 in observed data)
+        [+04]  uint32  lod_level_count   number of LOD descriptor entries in the
+                                         LOD table (always 1 in observed data).
+                                         Used as the loop bound in sub_4320F0
+                                         (~line 40823: result < *(_DWORD *)(a1+4))
+        [+08]  uint32  num_extra_sub     extra sub-objects beyond the root.
+                                         Only the LOW BYTE is used by sub_430200
+                                         (~line 39331: v14 = *((_BYTE*)v9+8) + 1).
+                                         Total sub-object count = num_extra_sub + 1.
+                                         Full uint32 used only in malloc call.
         [+12]  uint32  sub_transform_offset  byte offset into blob of sub-object
-                                             transform table (v9[3])
+                                             transform table (v9[3] in sub_430200)
         [+16]  uint32  sub_material_offset   byte offset into blob of per-sub
                                              material index table (v9[4])
-        [+20]  uint32  lod_offset     byte offset into blob of the first LOD
-                                      descriptor (v9[5]); lod[+4] = poly_count
-        [+24]  uint32  mesh_handle    display-list handle / render-object index
-                                      (v9[6], runtime value patched at load time)
-        [+28]  uint32  zero
+        [+20]  uint32  lod_offset        byte offset into blob of the LOD descriptor
+                                         table (v9[5]); each entry is 48 bytes.
+        [+24]  uint32  mesh_handle       display-list handle / render-object index
+                                         (v9[6], runtime value patched at load time)
+        [+28]  uint32  zero              (unused / reserved)
+        [+32]  uint32  0 (file) / ptr    relocated by sub_4320F0 (+32): MAPI base ptr
+        [+36]  uint32  0 (file)
+        [+40]  uint32  0 (file) / ptr    relocated by sub_4320F0 (+40)
+        [+44]  uint32  0 (file)
+        [+48]  uint32  offset / ptr      relocated by sub_4320F0 (+48); points into
+                                         some sub-structure within the blob
 
-    LOD descriptor at lod_offset (v9[5]):
-        [+00]  uint32  max_draw_dist  (checked against dword_45E634)
-        [+04]  uint32  poly_count     (compared to dword_45E634 for LOD selection)
+    Sub-object transform table (at sub_transform_offset):
+        One 8-byte entry per EXTRA sub-object (i.e. num_extra_sub entries).
+        The ROOT sub-object (index 0) has no entry.
+        Per entry:
+            [+0]  int16  offset_x   position offset from root origin
+            [+2]  int16  offset_y
+            [+4]  int16  offset_z
+            [+6]  int16  (not read by engine — may be renderer metadata)
+        sub_430200 reads only the first three int16s (offsets 0, 2, 4).
+
+    Sub-object material table (at sub_material_offset):
+        One 4-byte entry per EXTRA sub-object (num_extra_sub entries).
+        Per entry:
+            [+0]  uint32  mat_idx   material / MAPI index for this sub-object
+
+    LOD descriptor table (at lod_offset):
+        lod_level_count × 48-byte entries.  First entry (LOD 0):
+            [+00]  uint32  max_draw_dist  maximum draw distance for this LOD level
+                                          (checked against dword_45E634)
+            [+04]  uint32  vertex_count   number of vertices in this LOD mesh.
+                                          NOTE: previously misnamed "poly_count".
+                                          This is the vertex count, compared to 256
+                                          in sub_4320F0 (~line 40872) and to
+                                          dword_45EB14 for stats tracking.
+            [+08..+47]  additional LOD data (vertex/face table offsets and counts;
+                                            not yet fully parsed — see below)
+
+    Sub-object transform block layout in the RUNTIME scene-object:
+        Allocated by sub_430200 at: base_ptr = v10 + 14*4 (= v10 + 56 bytes)
+        One 112-byte block per sub-object (0..num_extra_sub):
+            [+0]   int16  rot_x        (engine Euler angle, 65536 = 360°)
+            [+2]   int16  rot_y
+            [+4]   int16  rot_z
+            [+6]   float  scale        (initialised to 1.0 = 0x3F800000)
+            [+10]  byte   dirty_flag_0 (0 = clean after absolute set by ANM op5)
+            [+11]  byte   dirty_flag_1 (1 = needs rebuild after blend)
+            [+12]  int32  mat_idx      (from sub_material_offset table)
+            [+16]  int32  offset_x     (sign-extended from int16 sub_transform entry)
+            [+20]  int32  offset_y
+            [+24]  int32  offset_z
+            [+28..+111]  renderer matrix + bounding-sphere data (gxDLL managed)
+
+        ANM opcode 5 writes to this block via sub_430A90(scene_obj, sub_obj_idx,
+        rot_x, rot_y, rot_z, flags=2), updating rot_x/y/z and clearing dirty flags.
     """
     flags: int
-    unknown1: int
+    lod_level_count: int     # number of LOD descriptor entries (was: unknown1)
     num_extra_sub: int
     sub_transform_offset: int
     sub_material_offset: int
     lod_offset: int
     mesh_handle: int
     lod_max_draw_dist: Optional[int]
-    lod_poly_count: Optional[int]
+    lod_vertex_count: Optional[int]  # previously misnamed lod_poly_count; this is vertex count
     sub_objects: list[SubObjectEntry]
     raw_size: int
 
@@ -333,6 +438,13 @@ class TaniEntry:
 
 
 @dataclass
+class SuboChunk:
+    raw: bytes          # full uninterpreted payload
+    num_instances: int  # len(raw) // bytes_per_instance (if evenly divisible by OBJI count)
+    bytes_per_instance: int  # raw size / OBJI count (0 if not evenly divisible)
+
+
+@dataclass
 class SenFile:
     total_data_size: int
     onam_buffer: bytes               # raw flat ONAM payload (null-separated names)
@@ -343,7 +455,7 @@ class SenFile:
     colour_table: list[int]              # raw uint32 RGBA values
     mesh_entries: list                   # list of ('name', str) | ('mesh', MeshHeader)
     tani_entries: list[list[TaniEntry]]  # each TANI chunk = list of TaniEntry records
-    subo_entries: list[bytes]            # raw payloads (opaque — engine sub-object reg)
+    subo_entries: list[SuboChunk]        # DEAD DATA — stored to dword_45EB30, never read back
     keep_blob: Optional[bytes]           # raw KEEP payload
     temp_blob: Optional[bytes]           # raw TEMP payload
     unknown_chunks: list[Chunk]
@@ -432,6 +544,24 @@ def parse_string_table(data: bytes) -> list[str]:
     if current:
         strings.append(current.decode('latin-1'))
     return strings
+
+
+def parse_subo(data: bytes, obji_count: int) -> SuboChunk:
+    """Parse the SUBO payload into a SuboChunk.
+
+    The SUBO pointer is stored in dword_45EB30 but never read back — the
+    payload is dead data in this engine version.  We preserve the raw bytes
+    and document the per-instance block size for forensic purposes.
+
+    References: sub_432320 case 0x4F425553 (~line 41089 of decompile.c);
+                sub_432C00 case 1329747283 (~line 41438 of decompile.c).
+    """
+    bpi = 0
+    ni = 0
+    if obji_count > 0 and len(data) % obji_count == 0:
+        bpi = len(data) // obji_count
+        ni = obji_count
+    return SuboChunk(raw=data, num_instances=ni, bytes_per_instance=bpi)
 
 
 def parse_obji(data: bytes) -> list[ObjInstance]:
@@ -524,32 +654,35 @@ def parse_sub_object_table(data: bytes,
 def parse_mesh_header(data: bytes) -> MeshHeader:
     """Parse the header of a MESH payload blob.
 
-    The blob is an engine mesh-object descriptor.  The first 32 bytes form a
-    fixed header; the LOD descriptor lives at the offset stored in lod_offset.
-    When num_extra_sub > 0 the sub_transform_offset and sub_material_offset
-    point to tables consumed by sub_430200 to initialise child display-list
-    entries for a multi-sub mesh.
+    The blob is an engine mesh-object descriptor.  The first 52 bytes form the
+    fixed header (up to and including the padding zeroes); the sub-object tables
+    begin at sub_transform_offset and sub_material_offset; the LOD descriptor
+    table begins at lod_offset (48 bytes per LOD level).
 
-    Mirrors the load path in sub_430200 / sub_432320.
+    When num_extra_sub > 0 the sub_transform_offset and sub_material_offset
+    point to tables consumed by sub_430200 to initialise the extra child
+    sub-objects in the runtime scene-object block.
+
+    Mirrors the load path in sub_430200 / sub_432320 / sub_4320F0.
     """
     if len(data) < 28:
         return MeshHeader(
-            flags=0, unknown1=0, num_extra_sub=0,
+            flags=0, lod_level_count=0, num_extra_sub=0,
             sub_transform_offset=0, sub_material_offset=0,
             lod_offset=0, mesh_handle=0,
-            lod_max_draw_dist=None, lod_poly_count=None,
+            lod_max_draw_dist=None, lod_vertex_count=None,
             sub_objects=[],
             raw_size=len(data),
         )
-    flags, unknown1, num_extra_sub = struct.unpack_from('<III', data, 0)
-    num_extra_sub &= 0xFF  # only lowest byte used for loop count, though malloc uses full uint32
+    flags, lod_level_count, num_extra_sub = struct.unpack_from('<III', data, 0)
+    num_extra_sub &= 0xFF  # only lowest byte used for loop count in sub_430200; full uint32 for malloc
     sub_transform_offset, sub_material_offset, lod_offset, mesh_handle = \
         struct.unpack_from('<IIII', data, 12)
 
     lod_max_draw_dist: Optional[int] = None
-    lod_poly_count: Optional[int] = None
+    lod_vertex_count: Optional[int] = None
     if lod_offset + 8 <= len(data):
-        lod_max_draw_dist, lod_poly_count = struct.unpack_from('<II', data, lod_offset)
+        lod_max_draw_dist, lod_vertex_count = struct.unpack_from('<II', data, lod_offset)
 
     sub_objects = parse_sub_object_table(
         data, num_extra_sub, sub_transform_offset, sub_material_offset,
@@ -557,14 +690,14 @@ def parse_mesh_header(data: bytes) -> MeshHeader:
 
     return MeshHeader(
         flags=flags,
-        unknown1=unknown1,
+        lod_level_count=lod_level_count,
         num_extra_sub=num_extra_sub,
         sub_transform_offset=sub_transform_offset,
         sub_material_offset=sub_material_offset,
         lod_offset=lod_offset,
         mesh_handle=mesh_handle,
         lod_max_draw_dist=lod_max_draw_dist,
-        lod_poly_count=lod_poly_count,
+        lod_vertex_count=lod_vertex_count,
         sub_objects=sub_objects,
         raw_size=len(data),
     )
@@ -707,7 +840,7 @@ def parse_sen(data: bytes) -> SenFile:
     colour_table: list[int] = []
     mesh_entries: list = []
     tani_entries: list[list[TaniEntry]] = []
-    subo_entries: list[bytes] = []
+    subo_entries: list[SuboChunk] = []
     keep_blob: Optional[bytes] = None
     temp_blob: Optional[bytes] = None
     unknown_chunks: list[Chunk] = []
@@ -786,11 +919,22 @@ def parse_sen(data: bytes) -> SenFile:
             # UV texture scrolling — separate from ANM opcode 5 (sub_430A90).
             tani_entries.append(parse_tani(payload))
         elif tag == 'SUBO':
-            # sub_432320 case 0x4F425553 (~line 41089):
+            # sub_432320 case 0x4F425553 (~line 41089 of decompile.c):
             #   sub_419870(v4, Offset) -> scenery-pool alloc
-            #   dword_45EB30 = ptr
-            # Opaque blob passed to the engine's sub-object registration system.
-            subo_entries.append(payload)
+            #   dword_45EB30 = (int)v16  (ptr stored, NEVER READ BACK)
+            # sub_432C00 case 1329747283 (~line 41438): same — sets dword_45EB30.
+            #
+            # *** DEAD DATA *** — the payload pointer is stored in dword_45EB30
+            # but is never dereferenced anywhere in decompile.c or gxSoft.c.
+            # gxDLLInit (gxSoft.c line 454) fills unk_45EB40 = a1[0..30] with
+            # function pointers; dword_45EB30 = a1[-4] is never touched by the DLL.
+            # dword_45EB08 / dword_45EB0C (which feed a2 in the OBJI→sub_430200
+            # call, ~line 41281) are both permanently 0 (sub_431CB0 line 40566).
+            # See SuboChunk docstring for the full investigation.
+            #
+            # In CHARACTERS.SEN: 34128 bytes = 36 OBJI instances × 948 bytes each.
+            # Internal structure of each 948-byte block is unknown — no code parses it.
+            subo_entries.append(parse_subo(payload, len(object_instances)))
         elif tag == 'KEEP':
             # sub_432320 case 0x5045454B (~line 41071):
             #   sub_419870(v4, Offset) -> scenery-pool alloc (kept alive)
@@ -1056,10 +1200,11 @@ def print_summary(sen: SenFile, max_lines: int = 10) -> None:
             mh: MeshHeader = val
             lod_info = ""
             if mh.lod_max_draw_dist is not None:
-                lod_info = f"  lod_dist={mh.lod_max_draw_dist} poly_count={mh.lod_poly_count}"
+                lod_info = f"  lod_dist={mh.lod_max_draw_dist} vertex_count={mh.lod_vertex_count}"
             print(
                 f"  [{i:3d}] MESH: {mh.raw_size} bytes  "
-                f"flags=0x{mh.flags:08X}  num_extra_sub={mh.num_extra_sub}  "
+                f"flags=0x{mh.flags:08X}  lod_levels={mh.lod_level_count}  "
+                f"num_extra_sub={mh.num_extra_sub}  "
                 f"mesh_handle=0x{mh.mesh_handle:04X}{lod_info}"
             )
             if mh.sub_objects:
@@ -1087,9 +1232,10 @@ def print_summary(sen: SenFile, max_lines: int = 10) -> None:
             )
 
     print()
-    print(f"SUBO entries ({len(sen.subo_entries)})")
+    print(f"SUBO entries ({len(sen.subo_entries)}) — DEAD DATA (pointer stored, never read by engine)")
     for i, s in truncated(sen.subo_entries, "entries"):
-        print(f"  [{i:3d}] {len(s)} bytes (opaque sub-object registration table)")
+        bpi_note = f", {s.bytes_per_instance} bytes/instance" if s.bytes_per_instance else ""
+        print(f"  [{i:3d}] {len(s.raw)} bytes raw{bpi_note}")
 
     if sen.keep_blob is not None:
         inner = walk_inner_chunks(sen.keep_blob)
@@ -1147,13 +1293,14 @@ def to_dict(sen: SenFile) -> dict:
                 else {
                     'type': 'mesh',
                     'flags': val.flags,
+                    'lod_level_count': val.lod_level_count,
                     'num_extra_sub': val.num_extra_sub,
                     'sub_transform_offset': val.sub_transform_offset,
                     'sub_material_offset': val.sub_material_offset,
                     'lod_offset': val.lod_offset,
                     'mesh_handle': val.mesh_handle,
                     'lod_max_draw_dist': val.lod_max_draw_dist,
-                    'lod_poly_count': val.lod_poly_count,
+                    'lod_vertex_count': val.lod_vertex_count,
                     'sub_objects': [asdict(s) for s in val.sub_objects],
                     'raw_size': val.raw_size,
                 }
@@ -1175,7 +1322,15 @@ def to_dict(sen: SenFile) -> dict:
             ]
             for chunk in sen.tani_entries
         ],
-        'subo_entry_count': len(sen.subo_entries),
+        'subo_entries': [
+            {
+                'raw_size': len(s.raw),
+                'num_instances': s.num_instances,
+                'bytes_per_instance': s.bytes_per_instance,
+                'note': 'DEAD DATA — dword_45EB30 is set but never read back',
+            }
+            for s in sen.subo_entries
+        ],
         'keep_blob_size': len(sen.keep_blob) if sen.keep_blob else None,
         'temp_blob_size': len(sen.temp_blob) if sen.temp_blob else None,
         'unknown_chunks': [asdict(ch) for ch in sen.unknown_chunks],

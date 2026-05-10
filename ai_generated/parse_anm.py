@@ -8,12 +8,12 @@ FILE FORMAT
 
   [0..2]   Magic: "ANM"
   [3]      Version: 1 or 2  (checked in sub_433A90)
-  [4..5]   uint16 bone_count
-  [6..]    bone_count × Pascal strings  { uint8 len, char[len] }
-           uint16 mesh_count
-           mesh_count × { uint8 len, char[len], uint16 keyframe_count }
-           uint16 track_count
-           track_count × { uint16 key_count, keyframe[key_count] }
+   [4..5]   uint16 bone_count
+            bone_count × Pascal strings  { uint8 len, char[len] }
+            uint16 mesh_count
+            mesh_count × { uint8 len, char[len], uint16 sub_obj_idx }
+            uint16 track_count
+            track_count × { uint16 key_count, keyframe[key_count] }
 
 All integers are little-endian (sub_433EF0 = read-u16, sub_433F10 = read-u32).
 
@@ -56,49 +56,68 @@ Each keyframe starts with a u8 opcode byte, followed by a fixed payload.
     In-memory layout: [u8=4][ptr bone_handle 4B][i16 rx][i16 ry][i16 rz]  13 B
     packed to 16 bytes (LABEL_24 → v4 += 16).
 
-  Opcode 5 – set_mesh_suboject_orientation  (sub_434090 case 5, sub_434290 case 5)
-    Payload: u16 mesh_idx + 3 × int16  (rot_x, rot_y, rot_z)  = 8 bytes (total
-             including opcode byte = 8; no padding — v4 += 8 at LABEL_21).
+  Opcode 5 – set_mesh_subobj_orientation  (sub_434090 case 5, sub_434290 case 5)
+    Payload in file: u16 mesh_idx + 3 × int16  (rot_x, rot_y, rot_z)  = 8 bytes total
+    (including opcode byte = 8; no padding — v4 += 8 at LABEL_21).
 
     This opcode drives the rotation of a named *sub-object* (mesh bone) within
-    a scene object.  It does NOT select a numbered flipbook frame; the three
-    int16 values are compact Euler rotation angles in the same fixed-point
-    encoding as opcode 4 (65536 units = 360°).
+    a scene object.  The three int16 values are compact Euler rotation angles
+    in the same fixed-point encoding as opcode 4 (65536 units = 360°).
 
     Load-time resolution (sub_433A90, case 5 ~line 42399):
       mesh_idx indexes into the ANM mesh table built during loading.
       Two parallel arrays are allocated (mesh_count DWORDs each):
-        v60[i] = sub_431E20(mesh_name)   ← scene-object pointer (name→handle)
-        v61[i] = frame_count             ← from ANM header (uint16, 4B aligned)
-      The keyframe byte +1 is set to:
-        v25[1] = v61[4 * mesh_idx]       ← first byte of frame_count entry
-      Both arrays are freed after packing (sub_419A60 calls).
+        v60[i] = sub_431E20(mesh_name)   ← scene-object pointer (name→handle lookup)
+        v61[i] = sub_obj_idx_uint16      ← MeshEntry.sub_obj_idx from ANM file header
+      The in-memory keyframe byte at +1 is set to:
+        v25[1] = ((byte*)v61)[4 * mesh_idx]   ← LOW BYTE of v61[mesh_idx] = sub_obj_idx
+      Both temporary arrays are freed after packing (sub_419A60 calls).
 
-      NOTE: MeshEntry.keyframe_count (called "frame_count" in the raw file) is
-      NOT a playback loop limit.  It is used only in sub_433F40 (size-calculation
-      pass, case 5: v12 += 8) to pre-compute how many bytes to allocate for all
-      keyframes in one shot.  The count tells the loader how many opcode 5
-      keyframes across all tracks reference this mesh entry.
+      CRITICAL: The second field of each ANM MeshEntry is the sub-object index
+      (0-based slot into the scene object's 112-byte transform block array),
+      NOT a keyframe or frame count.  The engine stores it as uint16 but only
+      uses the low byte.
 
     In-memory keyframe layout (8 bytes, no opcode-byte padding):
       [u8=5][u8 sub_obj_idx][i16 rot_x][i16 rot_y][i16 rot_z]
       sub_obj_idx: the sub-object slot index within the bound scene object
-                   (derived from v61 — the low byte of the mesh handle entry).
+                   (= MeshEntry.sub_obj_idx for the ANM mesh entry at mesh_idx).
 
     Apply-time (sub_434090 case 5):
-      v11 = a2[6]   ← the scene object this animation is bound to
+      v11 = a2[6]   ← the scene object this animation is bound to (set in sub_433A90)
       sub_430A90(v11, sub_obj_idx, rot_x, rot_y, rot_z, flags=2)
-      sub_430A90 writes into the per-sub-object transform block:
-        base = *(scene_obj + 20) + 112 * sub_obj_idx
-        base[+0..+5] = three int16 Euler angles (absolute set, mode 2)
-        base[+10], base[+11] = dirty flags cleared to 0
+      sub_430A90 mode 2 (absolute set) writes into the per-sub-object transform block:
+        base_ptr = *(scene_obj + 20)            ← sub-object block array pointer
+        block    = base_ptr + 112 * sub_obj_idx ← 112-byte block for this sub-object
+        block[+0]  = rot_x  (int16)
+        block[+2]  = rot_y  (int16)
+        block[+4]  = rot_z  (int16)
+        block[+10] = 0      (dirty flag cleared)
+        block[+11] = 0      (dirty flag cleared)
       Y/Z negation does NOT happen for opcode 5 (unlike opcodes 1–4).
 
+    The 112-byte sub-object transform block layout:
+        [+0]   int16  rot_x        (Euler angle, engine units)
+        [+2]   int16  rot_y
+        [+4]   int16  rot_z
+        [+6]   float  scale        (initialised to 1.0)
+        [+10]  byte   dirty_flag_0 (cleared to 0 on absolute set)
+        [+11]  byte   dirty_flag_1 (cleared to 0 on absolute set; set to 1 on blend)
+        [+12]  int32  mat_idx      (material index from SEN MESH sub_material table)
+        [+16]  int32  offset_x     (sign-extended from int16 in SEN sub_transform table)
+        [+20]  int32  offset_y
+        [+24]  int32  offset_z
+        [+28..+111] renderer-specific data (matrix, bounding sphere, etc.)
+
+    The sub_obj_idx == 0 refers to the ROOT sub-object (always present).
+    Sub-objects 1..N refer to extra sub-objects from the SEN MESH header's
+    sub_transform and sub_material tables (N = num_extra_sub).
+
     Blending variant (sub_434290 case 5):
-      Calls sub_431110(bone_ptr, sub_obj_idx, rot_x, rot_y, rot_z):
+      Calls sub_431110(scene_obj, sub_obj_idx, rot_x, rot_y, rot_z):
         Builds a full 3×3 rotation matrix from the three angles.
         Blends 50/50 with the current matrix already in the transform block.
-        Sets dirty flag base[+10] = 1.
+        Sets dirty flag block[+10] = 1.
       Used when seeking to a non-sequential frame (interpolation path).
 
   Opcode 6 – move_implicit_bone  (sub_434090 case 6, sub_434290 case 6)
@@ -202,13 +221,30 @@ class MeshEntry:
     'name' is the scene-object name (uppercased at load time via _strupr,
     then resolved to a handle by sub_431E20 / sub_433A90 in the engine).
 
-    'keyframe_count' is NOT a playback loop limit.  It counts how many
-    opcode-5 keyframes across all tracks reference this mesh entry; the
-    loader uses it only in the buffer-size pre-calculation pass (sub_433F40
-    case 5: v12 += 8 per keyframe).
+    'sub_obj_idx' is the sub-object slot index within the bound scene object.
+    Despite being stored as a uint16 field in the ANM file, only the low byte
+    is used at load time:
+
+        v61 array: each entry DWORD gets `*v15 = keyframe_count_uint16` written
+                   by the mesh-table parsing loop (sub_433A90 line 42328).
+        At pack time (case 5): v25[1] = v50[4 * mesh_idx]  where v50 = (byte*)v61.
+                   This reads the LOW BYTE of v61[mesh_idx], which is the
+                   uint16 keyframe_count value narrowed to uint8.
+
+    So what the file calls the "keyframe_count" is really the sub-object index
+    (0-based slot into the scene object's sub-object transform block array)
+    that opcode-5 keyframes referencing this mesh entry will target.
+
+    In typical ANM files, all mesh entries share the same scene-object name
+    (e.g. "roland") with consecutive sub_obj_idx values (0, 1, 2, ...), one
+    entry per animated sub-object on that character mesh.
+
+    Also used in sub_433F40 (buffer-size pass): case 5 adds 8 bytes per
+    opcode-5 keyframe found during the pre-scan, but this is driven by the
+    ANM track data, not this field.
     """
     name: str
-    keyframe_count: int   # formerly misnamed "frame_count" — see docstring
+    sub_obj_idx: int   # sub-object slot index within the bound scene object (low byte of stored uint16)
 
 
 @dataclass
@@ -222,6 +258,9 @@ class Keyframe:
       4  set_bone_orientation     – int16 rot_xyz sets bone Euler angles
       5  set_mesh_subobj_orient   – int16 rot_xyz sets sub-object Euler angles
                                     via sub_430A90 (NO axis negation)
+                                    target_index = mesh table index (from file)
+                                    target_name  = mesh entry name (scene object)
+                                    The actual sub-object slot = MeshEntry.sub_obj_idx
       6  move_implicit_bone       – float xyz moves the bound scene object itself
 
     For opcode 5 the uvw fields hold raw Euler angles (engine int16 units,
@@ -395,15 +434,16 @@ def parse_anm(data: bytes) -> AnmFile:
     bone_names: list[str] = [r.pascal_string() for _ in range(bone_count)]
 
     # --- Mesh entries (sub_433A90: v11 = sub_433EF0(v5), then loop) ---
-    # Each entry: Pascal string name + uint16 keyframe_count.
-    # keyframe_count is used only for buffer allocation (sub_433F40 case 5:
-    # v12 += 8 per keyframe); it does NOT limit playback iterations.
+    # Each entry: Pascal string name + uint16 sub_obj_idx.
+    # sub_obj_idx is the sub-object slot index within the named scene object.
+    # At pack time the low byte of this value becomes the in-memory opcode-5
+    # keyframe byte at [+1] (sub_433A90 line 42413: v25[1] = v50[4 * v46]).
     mesh_count = r.u16()
     meshes: list[MeshEntry] = []
     for _ in range(mesh_count):
         name = r.pascal_string()
-        keyframe_count = r.u16()
-        meshes.append(MeshEntry(name=name, keyframe_count=keyframe_count))
+        sub_obj_idx = r.u16()
+        meshes.append(MeshEntry(name=name, sub_obj_idx=sub_obj_idx))
 
     # --- Tracks (sub_433A90: v20 = sub_433EF0(v12), then outer/inner loops) ---
     track_count = r.u16()
@@ -822,8 +862,8 @@ def print_summary(anm: AnmFile) -> None:
 
     print(f"Meshes      : {len(anm.meshes)}")
     for i, m in enumerate(anm.meshes):
-        # keyframe_count = buffer-allocation hint only, not a loop limit
-        print(f"  [{i:3d}] {m.name}  (keyframe_count={m.keyframe_count})")
+        # sub_obj_idx = sub-object slot index within the named scene object
+        print(f"  [{i:3d}] {m.name}  sub_obj_idx={m.sub_obj_idx}")
 
     print(f"Tracks      : {len(anm.tracks)}")
     for t_idx, track in enumerate(anm.tracks):
@@ -848,7 +888,7 @@ def to_dict(anm: AnmFile) -> dict:
         "version": anm.version,
         "bone_names": anm.bone_names,
         "meshes": [
-            {"name": m.name, "keyframe_count": m.keyframe_count}
+            {"name": m.name, "sub_obj_idx": m.sub_obj_idx}
             for m in anm.meshes
         ],
         "tracks": [
