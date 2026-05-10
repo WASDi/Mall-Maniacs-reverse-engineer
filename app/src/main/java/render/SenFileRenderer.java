@@ -1,5 +1,7 @@
 package render;
 
+import anmfile.AnmFile;
+import anmfile.factories.AnmFileFactory;
 import org.joml.Matrix4f;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.glfw.GLFWErrorCallback;
@@ -13,17 +15,15 @@ import senfile.factories.SenFileFactory;
 import senfile.parts.elements.MapiElement;
 import senfile.parts.elements.ObjiElement;
 import senfile.parts.elements.SuboElement;
-import senfile.parts.mesh.MeshCharacter;
 import senfile.parts.mesh.SenMesh;
 import senfile.parts.mesh.Vertex;
 import tpgviewer.tpg.TpgImage;
 import tpgviewer.tpg.TpgImageFactory;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.util.List;
-import java.util.Random;
-import java.util.stream.IntStream;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
@@ -45,20 +45,21 @@ public class SenFileRenderer {
     private final Matrix4f modelViewMatrix = new Matrix4f();
 
     // FloatBuffer for transferring matrices to OpenGL
-    private FloatBuffer fb = BufferUtils.createFloatBuffer(16);
+    private final FloatBuffer fb = BufferUtils.createFloatBuffer(16);
 
-    private int texture_random;
     private static final int NUM_MERGED_TPG_FILES = 32;
-    private int[] texture_MERGED = new int[NUM_MERGED_TPG_FILES];
+    private final int[] texture_MERGED = new int[NUM_MERGED_TPG_FILES];
 
     private final SenFile senFile;
+    private final AnmFile anmFile;
     private int meshIdx = 29;
     private int debug = -1;
 
     private final Movement movement = new Movement(0f, 7f, 22f);
 
-    public SenFileRenderer(SenFile senFile) {
+    public SenFileRenderer(SenFile senFile, AnmFile anmFile) {
         this.senFile = senFile;
+        this.anmFile = anmFile;
     }
 
     private void run() {
@@ -124,15 +125,15 @@ public class SenFileRenderer {
             }
         });
         glfwSetFramebufferSizeCallback(window,
-                                       fbCallback = new GLFWFramebufferSizeCallback() {
-                                           @Override
-                                           public void invoke(long window, int w, int h) {
-                                               if (w > 0 && h > 0) {
-                                                   width = w;
-                                                   height = h;
-                                               }
-                                           }
-                                       });
+                fbCallback = new GLFWFramebufferSizeCallback() {
+                    @Override
+                    public void invoke(long window, int w, int h) {
+                        if (w > 0 && h > 0) {
+                            width = w;
+                            height = h;
+                        }
+                    }
+                });
 
         GLFWVidMode vidmode = glfwGetVideoMode(glfwGetPrimaryMonitor());
         glfwSetWindowPos(window, (vidmode.width() - width) / 2, (vidmode.height() - height) / 2);
@@ -140,29 +141,12 @@ public class SenFileRenderer {
         glfwMakeContextCurrent(window);
         glfwSwapInterval(1);
         glfwShowWindow(window);
-    }
 
-    private void initMyRandomTexture() {
-        texture_random = glGenTextures();
-        glBindTexture(GL_TEXTURE_2D, texture_random);
-        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+        GL.createCapabilities();
 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-        int height = 64;
-        int width = 64;
-
-        Random r = new Random();
-        float[] pixels = new float[width * height * 3];
-        for (int i = 0; i < pixels.length; i++) {
-            pixels[i] = r.nextFloat();
+        for (int i = 0; i < NUM_MERGED_TPG_FILES; i++) {
+            initMergedTpgTexture(i);
         }
-
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_FLOAT, pixels);
     }
 
     private void initMergedTpgTexture(int idx) {
@@ -182,8 +166,7 @@ public class SenFileRenderer {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, TpgImage.SIZE, TpgImage.SIZE, 0,
-                     GL_RGB, GL_UNSIGNED_BYTE, pixels);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, TpgImage.SIZE, TpgImage.SIZE, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
     }
 
     private void renderFromSenFile(int meshIdx) {
@@ -191,37 +174,15 @@ public class SenFileRenderer {
         int[] suboOffsets = mesh.getSuboOffsets();
         Vertex[] vertices = mesh.getVertices();
 
-        for (int i = 0; i < suboOffsets.length; i++) {
-            int suboOffset = suboOffsets[i];
+        for (int suboOffset : suboOffsets) {
             SuboElement.FaceInfo[] faceInfos = senFile.subo.elementByOffset(suboOffset).faceInfos;
 
-            for (int j = 0; j < faceInfos.length; j++) {
-                SuboElement.FaceInfo faceInfo = faceInfos[j];
+            for (SuboElement.FaceInfo faceInfo : faceInfos) {
                 byte[] vertexIndices = faceInfo.vertexIndices;
                 int v0 = vertexIndices[0] & 0xFF;
                 int v1 = vertexIndices[1] & 0xFF;
                 int v2 = vertexIndices[2] & 0xFF;
                 int v3 = vertexIndices[3] & 0xFF;
-
-                boolean[] bumps = new boolean[4];
-                if (debug >= 0 && mesh instanceof MeshCharacter) {
-                    int[] vertexId2Group = ((MeshCharacter) mesh).vertexId2Group;
-
-                    // Render one vertex group at a time
-                    if (IntStream.range(0, vertexIndices.length)
-                            .mapToObj(it -> vertexIndices[it])
-                            .noneMatch(it -> vertexId2Group[it] == debug)) {
-                        //continue;
-                    }
-
-                    // offset vertex groups
-                    for (int k = 0; k < bumps.length; k++) {
-                        if (vertexId2Group[vertexIndices[k]] == debug) {
-                            bumps[k] = true;
-                        }
-                    }
-                }
-
 
                 int textureIndexForFace = faceInfo.getMapiIndex();
                 MapiElement mapiElement = senFile.mapi.elements[textureIndexForFace];
@@ -244,24 +205,24 @@ public class SenFileRenderer {
                 glBegin(GL_TRIANGLES);
 
                 glTexCoord2f(v0tx, v0ty);
-                putVertex(vertices[v0], bumps[0]);
+                putVertex(vertices[v0]);
 
                 glTexCoord2f(v1tx, v1ty);
-                putVertex(vertices[v1], bumps[1]);
+                putVertex(vertices[v1]);
 
                 glTexCoord2f(v2tx, v2ty);
-                putVertex(vertices[v2], bumps[2]);
+                putVertex(vertices[v2]);
 
                 // --- //
 
                 glTexCoord2f(v3tx, v3ty);
-                putVertex(vertices[v3], bumps[3]);
+                putVertex(vertices[v3]);
 
                 glTexCoord2f(v0tx, v0ty);
-                putVertex(vertices[v0], bumps[0]);
+                putVertex(vertices[v0]);
 
                 glTexCoord2f(v2tx, v2ty);
-                putVertex(vertices[v2], bumps[2]);
+                putVertex(vertices[v2]);
 
 
                 glEnd();
@@ -271,22 +232,11 @@ public class SenFileRenderer {
 
     private static final float SCALE = .002f;
 
-    private void putVertex(Vertex vertex, boolean bump) {
-        if (bump) {
-            int offset = -300;
-            vertex = new Vertex(vertex.x + offset, vertex.y + offset, vertex.z + offset);
-        }
+    private void putVertex(Vertex vertex) {
         glVertex3f(vertex.x * SCALE, -vertex.y * SCALE, vertex.z * SCALE);
     }
 
     private void loop() {
-        GL.createCapabilities();
-
-//        initMyRandomTexture();
-        for (int i = 0; i < NUM_MERGED_TPG_FILES; i++) {
-            initMergedTpgTexture(i);
-        }
-
         // Set the clear color
         glClearColor(0.6f, 0.7f, 0.8f, 1.0f);
         // Enable depth testing
@@ -296,8 +246,7 @@ public class SenFileRenderer {
 
         // Build the projection matrix. Watch out here for integer division
         // when computing the aspect ratio!
-        projMatrix.setPerspective((float) Math.toRadians(40),
-                                  (float) width / height, 0.01f, 100.0f);
+        projMatrix.setPerspective((float) Math.toRadians(40), (float) width / height, 0.01f, 100.0f);
 
         // Remember the current time.
         long firstTime = System.nanoTime();
@@ -317,9 +266,11 @@ public class SenFileRenderer {
             glLoadMatrixf(projMatrix.get(fb));
 
             // Set lookat view matrix
-            viewMatrix.setLookAt(0.0f, 10.0f, 30.0f,
-                                 0, 0, 0,
-                                 0.0f, 1.0f, 0.0f);
+            viewMatrix.setLookAt(
+                    0.0f, 10.0f, 30.0f,
+                    0, 0, 0,
+                    0.0f, 1.0f, 0.0f
+            );
 
             viewMatrix.translate(movement.getX(), movement.getY(), movement.getZ());
 
@@ -352,20 +303,22 @@ public class SenFileRenderer {
             }
 
             ObjiElement obji = senFile.obji.elements[meshIdx];
-            modelMatrix.translation(SCALE * obji.x,
-                                    i * .3f,
-                                    SCALE * obji.z)
-                    .rotateY(angle * (float) Math.toRadians(90));
+            modelMatrix.translation(
+                    SCALE * obji.x,
+                    i * .3f,
+                    SCALE * obji.z
+            ).rotateY(angle * (float) Math.toRadians(90));
             glLoadMatrixf(viewMatrix.mul(modelMatrix, modelViewMatrix).get(fb));
             renderFromSenFile(i);
         }
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
 //        SenFile senFile = SenFileFactory.fromFile(Util.ROOT_DIR + "scene_aqua/OBJECTS.SEN");
 //        SenFile senFile = SenFileFactory.fromFile(Util.ROOT_DIR + "scene_aqua/AQUAMALL.SEN");
 //        SenFile senFile = SenFileFactory.fromFile(Util.ROOT_DIR + "scene_ica/MALL1_ICA.SEN");
         SenFile senFile = SenFileFactory.fromFile(Util.ROOT_DIR + "scene_ica/CHARACTERS.SEN");
-        new SenFileRenderer(senFile).run();
+        AnmFile anmFile = AnmFileFactory.fromFile(Util.ROOT_DIR + "anim/s_run.anm");
+        new SenFileRenderer(senFile, anmFile).run();
     }
 }
