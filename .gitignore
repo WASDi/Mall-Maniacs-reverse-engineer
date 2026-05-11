@@ -2,3 +2,4 @@
 .idea
 app/target
 decompile.c
+gxSoft.c

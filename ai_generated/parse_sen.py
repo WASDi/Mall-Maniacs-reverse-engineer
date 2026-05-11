@@ -399,7 +399,7 @@ class MeshHeader:
     lod_offset: int
     mesh_handle: int
     lod_max_draw_dist: Optional[int]
-    lod_vertex_count: Optional[int]  # previously misnamed lod_poly_count; this is vertex count
+    lod_vertex_count: Optional[int]  # decompile.c:39368 — *(v9[5] + 4), where v9[5] == lod_offset
     sub_objects: list[SubObjectEntry]
     raw_size: int
 

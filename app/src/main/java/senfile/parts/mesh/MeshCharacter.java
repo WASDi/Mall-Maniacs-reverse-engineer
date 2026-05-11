@@ -16,9 +16,7 @@ public class MeshCharacter extends SenMesh {
     public final short[] subTransformY = new short[15]; // offset_y
     public final short[] subTransformZ = new short[15]; // offset_z
 
-    // Sub-object material table: 15 entries (subObjIdx 1..15), each 4 bytes = 1 int32.
-    // Previously misread as boneHierarchy_0..13 (14 ints); corrected to 15 ints.
-    public final int[] subMaterialIndex = new int[15]; // material index for subObjIdx 1..15
+    public final int[] unknown = new int[15]; // subMaterialIndex?
 
     public final int maxDrawDistance; // == 10000000
     public final int numVertices;
@@ -55,9 +53,8 @@ public class MeshCharacter extends SenMesh {
             subTransformZ[i] = (short) (int1 & 0xFFFF);
         }
 
-        // Read 15 sub-material entries (1 int each = 15 ints total).
-        for (int i = 0; i < 15; i++) {
-            subMaterialIndex[i] = rawData[idx++];
+        for (int i = 0; i < unknown.length; i++) {
+            unknown[i] = rawData[idx++];
         }
 
         maxDrawDistance = rawData[idx++];
