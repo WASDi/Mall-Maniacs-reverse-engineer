@@ -21,13 +21,12 @@ import static org.lwjgl.opengl.GL11.*;
  */
 public class SenMeshRenderer {
 
-    private static final int NUM_MERGED_TPG_FILES = 32;
     public static final float SCALE = .002f;
 
     private final SenFile senFile;
     private final AnimationController animationController;
     private final String textureDirectory;
-    private final int[] texture_MERGED = new int[NUM_MERGED_TPG_FILES];
+    private final int[] textures;
 
     private int debug = -1;
 
@@ -35,6 +34,7 @@ public class SenMeshRenderer {
         this.senFile = senFile;
         this.animationController = animationController;
         this.textureDirectory = senFile.directory;
+        this.textures = new int[senFile.tnam.names.size()];
     }
 
     public void setDebugGroup(int debug) {
@@ -42,28 +42,28 @@ public class SenMeshRenderer {
     }
 
     public void initTextures() {
-        for (int i = 0; i < NUM_MERGED_TPG_FILES; i++) {
-            initMergedTpgTexture(i);
+        for (int i = 0; i < textures.length; i++) {
+            initTexture(i);
         }
     }
 
     public void disposeTextures() {
-        if (texture_MERGED[0] != 0) {
-            glDeleteTextures(texture_MERGED);
-            for (int i = 0; i < texture_MERGED.length; i++) {
-                texture_MERGED[i] = 0;
+        if (textures.length > 0 && textures[0] != 0) {
+            glDeleteTextures(textures);
+            for (int i = 0; i < textures.length; i++) {
+                textures[i] = 0;
             }
         }
     }
 
-    private void initMergedTpgTexture(int idx) {
-        String filePath = String.format(textureDirectory + "MERGED%02d.TPG", idx);
+    private void initTexture(int idx) {
+        String filePath = textureDirectory + senFile.tnam.names.get(idx) + ".TPG";
         TpgImage tpgImage = TpgImageFactory.fromFile(filePath);
         ByteBuffer pixels = Utils.toByteBuffer(tpgImage.renderLazy());
 
-        texture_MERGED[idx] = glGenTextures();
+        textures[idx] = glGenTextures();
 
-        glBindTexture(GL_TEXTURE_2D, texture_MERGED[idx]);
+        glBindTexture(GL_TEXTURE_2D, textures[idx]);
 
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
@@ -133,7 +133,7 @@ public class SenMeshRenderer {
                 float v3tx = (coords[6] & 0xFF) / div;
                 float v3ty = (coords[7] & 0xFF) / div;
 
-                glBindTexture(GL_TEXTURE_2D, texture_MERGED[mergedTpgFileIndex]);
+                glBindTexture(GL_TEXTURE_2D, textures[mergedTpgFileIndex]);
 
                 glBegin(GL_TRIANGLES);
 

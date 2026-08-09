@@ -12,7 +12,7 @@ public enum GameMap {
     AQUA("scene_aqua", "AQUAMALL.SEN"),
     FUTURE("scene_future", "FUTUREMALL.SEN");
 
-    public static final GameMap SELECTED_MAP = ICA;
+    public static final GameMap SELECTED_MAP = AQUA;
     public static final boolean RENDER_CHARACTERS = false;
 
     public final String senFileDirectory;

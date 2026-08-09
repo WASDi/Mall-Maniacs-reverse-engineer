@@ -253,8 +253,8 @@ public class SenFileRenderer {
 
     public static void main(String[] args) throws IOException {
 //        SenFile senFile = SenFileFactory.fromFile(Util.ROOT_DIR + "scene_aqua/OBJECTS.SEN");
-//        SenFile senFile = SenFileFactory.fromFile(Util.ROOT_DIR + "scene_aqua/AQUAMALL.SEN");
-        SenFile senFile = SenFileFactory.fromFile(Util.ROOT_DIR + "scene_ica/MALL1_ICA.SEN");
+        SenFile senFile = SenFileFactory.fromFile(Util.ROOT_DIR + "scene_aqua/AQUAMALL.SEN");
+//        SenFile senFile = SenFileFactory.fromFile(Util.ROOT_DIR + "scene_ica/MALL1_ICA.SEN");
 //        SenFile senFile = SenFileFactory.fromFile(Util.ROOT_DIR + "scene_ica/CHARACTERS.SEN");
 
         File animDir = new File(Util.ROOT_DIR + "anim/");

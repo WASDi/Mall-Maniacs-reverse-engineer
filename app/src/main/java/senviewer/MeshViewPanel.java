@@ -125,7 +125,7 @@ public class MeshViewPanel extends JPanel {
         }
 
         Matrix4f proj = new Matrix4f().setPerspective((float) Math.toRadians(40), (float) width / height, 0.01f, 100.0f);
-        Matrix4f view = new Matrix4f().setLookAt(0f, 5f, 20f, 0f, 0f, 0f, 0f, 1f, 0f);
+        Matrix4f view = new Matrix4f().setLookAt(0f, 5f, 15f, 0f, 0f, 0f, 0f, 1f, 0f);
         Matrix4f model = new Matrix4f().translation(0, 0, 0).rotateY(rotationAngle);
 
         glMatrixMode(GL_PROJECTION);
