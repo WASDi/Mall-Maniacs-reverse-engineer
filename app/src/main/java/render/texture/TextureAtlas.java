@@ -9,7 +9,6 @@ import tpgviewer.tpg.TpgImage;
 import tpgviewer.tpg.TpgImageFactory;
 
 import javax.imageio.ImageIO;
-import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.nio.ByteBuffer;
@@ -27,24 +26,24 @@ public class TextureAtlas {
         this.atlas = atlas;
     }
 
-    public static TextureAtlas atlasFromTnam(Tnam tnam) {
+    public static TextureAtlas atlasFromTnam(Tnam tnam, String directory) {
         if (tnam.names.size() > SIZE_X * SIZE_Y) {
             throw new IllegalArgumentException("Atlas too small, " + SIZE_X + "x" + SIZE_Y);
         }
         BufferedImage atlas = new BufferedImage(SIZE_X * TpgImage.SIZE,
                                                 SIZE_Y * TpgImage.SIZE,
                                                 TpgImage.BUFFERED_IMAGE_TYPE);
-        Graphics atlasGraphics = atlas.getGraphics();
 
         int idx = 0;
         for (String textureFile : tnam.names) {
-            String filePath = GameMap.SELECTED_MAP.senFileDirectory + textureFile + ".TPG";
+            String filePath = directory + textureFile + ".TPG";
             TpgImage tpgImage = TpgImageFactory.fromFile(filePath);
             BufferedImage subImage = tpgImage.renderLazy();
 
-            int x = TpgImage.SIZE * (idx % SIZE_Y);
-            int y = TpgImage.SIZE * (idx / SIZE_X);
-            atlasGraphics.drawImage(subImage, x, y, null);
+            int gridX = idx % SIZE_X;
+            int gridY = idx / SIZE_X;
+            int[] pixels = subImage.getRGB(0, 0, TpgImage.SIZE, TpgImage.SIZE, null, 0, TpgImage.SIZE);
+            atlas.setRGB(gridX * TpgImage.SIZE, gridY * TpgImage.SIZE, TpgImage.SIZE, TpgImage.SIZE, pixels, 0, TpgImage.SIZE);
             idx++;
         }
         return new TextureAtlas(atlas);
@@ -74,7 +73,8 @@ public class TextureAtlas {
 
     public static void main(String[] args) throws Exception {
 
-        BufferedImage atlas = atlasFromTnam(SenFileFactory.getMap(GameMap.SELECTED_MAP).tnam).atlas;
+        BufferedImage atlas = atlasFromTnam(SenFileFactory.getMap(GameMap.SELECTED_MAP).tnam,
+                                            GameMap.SELECTED_MAP.senFileDirectory).atlas;
 
         File outputFile = new File("/tmp/atlas.png");
         ImageIO.write(atlas, "png", outputFile);

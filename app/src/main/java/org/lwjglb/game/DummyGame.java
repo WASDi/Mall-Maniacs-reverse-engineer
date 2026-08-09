@@ -74,7 +74,7 @@ public class DummyGame implements IGameLogic {
         }
 
         meshesToRenderPos = new ArrayList<>();
-        Texture textureAtlas = TextureAtlas.atlasFromTnam(senFile.tnam).toLwjglTexture();
+        Texture textureAtlas = TextureAtlas.atlasFromTnam(senFile.tnam, senFile.directory).toLwjglTexture();
         for (SenMesh mesh : meshesToRender) {
             ObjiElement obji = senFile.obji.elements[mesh.meshIdx];
 

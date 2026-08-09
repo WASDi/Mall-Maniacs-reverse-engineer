@@ -1,17 +1,13 @@
 package render;
 
 import org.joml.Vector3f;
-import render.util.Utils;
+import render.texture.TextureAtlas;
 import senfile.SenFile;
 import senfile.parts.elements.MapiElement;
 import senfile.parts.elements.SuboElement;
 import senfile.parts.mesh.MeshCharacter;
 import senfile.parts.mesh.SenMesh;
 import senfile.parts.mesh.Vertex;
-import tpgviewer.tpg.TpgImage;
-import tpgviewer.tpg.TpgImageFactory;
-
-import java.nio.ByteBuffer;
 
 import static org.lwjgl.opengl.GL11.*;
 
@@ -25,16 +21,13 @@ public class SenMeshRenderer {
 
     private final SenFile senFile;
     private final AnimationController animationController;
-    private final String textureDirectory;
-    private final int[] textures;
+    private int textureId;
 
     private int debug = -1;
 
     public SenMeshRenderer(SenFile senFile, AnimationController animationController) {
         this.senFile = senFile;
         this.animationController = animationController;
-        this.textureDirectory = senFile.directory;
-        this.textures = new int[senFile.tnam.names.size()];
     }
 
     public void setDebugGroup(int debug) {
@@ -42,38 +35,14 @@ public class SenMeshRenderer {
     }
 
     public void initTextures() {
-        for (int i = 0; i < textures.length; i++) {
-            initTexture(i);
-        }
+        textureId = TextureAtlas.atlasFromTnam(senFile.tnam, senFile.directory).toLwjglTexture().getId();
     }
 
     public void disposeTextures() {
-        if (textures.length > 0 && textures[0] != 0) {
-            glDeleteTextures(textures);
-            for (int i = 0; i < textures.length; i++) {
-                textures[i] = 0;
-            }
+        if (textureId != 0) {
+            glDeleteTextures(textureId);
+            textureId = 0;
         }
-    }
-
-    private void initTexture(int idx) {
-        String filePath = textureDirectory + senFile.tnam.names.get(idx) + ".TPG";
-        TpgImage tpgImage = TpgImageFactory.fromFile(filePath);
-        ByteBuffer pixels = Utils.toByteBuffer(tpgImage.renderLazy());
-
-        textures[idx] = glGenTextures();
-
-        glBindTexture(GL_TEXTURE_2D, textures[idx]);
-
-        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, TpgImage.SIZE, TpgImage.SIZE, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
     }
 
     public void drawMesh(SenMesh mesh) {
@@ -90,6 +59,8 @@ public class SenMeshRenderer {
     }
 
     private void renderSubo(SenMesh mesh, int[] suboOffsets, Vertex[] vertices, Vector3f[] animatedVertices, boolean renderTransparent) {
+        glBindTexture(GL_TEXTURE_2D, textureId);
+
         for (int suboOffset : suboOffsets) {
             SuboElement suboElement = senFile.subo.elementByOffset(suboOffset);
             if (suboElement.getTransparencyMode().isTransparent != renderTransparent) {
@@ -119,21 +90,23 @@ public class SenMeshRenderer {
 
                 int textureIndexForFace = faceInfo.getMapiIndex();
                 MapiElement mapiElement = senFile.mapi.elements[textureIndexForFace];
-                int mergedTpgFileIndex = mapiElement.materialIndex;
+                int materialIndex = mapiElement.materialIndex;
                 byte[] coords = mapiElement.textureCoordBytes;
 
-                float div = 256f;
-                // Vertex N, texture x y
-                float v0tx = (coords[0] & 0xFF) / div;
-                float v0ty = (coords[1] & 0xFF) / div;
-                float v1tx = (coords[2] & 0xFF) / div;
-                float v1ty = (coords[3] & 0xFF) / div;
-                float v2tx = (coords[4] & 0xFF) / div;
-                float v2ty = (coords[5] & 0xFF) / div;
-                float v3tx = (coords[6] & 0xFF) / div;
-                float v3ty = (coords[7] & 0xFF) / div;
+                float xOffset = TextureAtlas.xOffsetFromIndex(materialIndex);
+                float yOffset = TextureAtlas.yOffsetFromIndex(materialIndex);
+                float divX = 256f * TextureAtlas.SIZE_X;
+                float divY = 256f * TextureAtlas.SIZE_Y;
 
-                glBindTexture(GL_TEXTURE_2D, textures[mergedTpgFileIndex]);
+                // Vertex N, texture x y
+                float v0tx = xOffset + (coords[0] & 0xFF) / divX;
+                float v0ty = yOffset + (coords[1] & 0xFF) / divY;
+                float v1tx = xOffset + (coords[2] & 0xFF) / divX;
+                float v1ty = yOffset + (coords[3] & 0xFF) / divY;
+                float v2tx = xOffset + (coords[4] & 0xFF) / divX;
+                float v2ty = yOffset + (coords[5] & 0xFF) / divY;
+                float v3tx = xOffset + (coords[6] & 0xFF) / divX;
+                float v3ty = yOffset + (coords[7] & 0xFF) / divY;
 
                 glBegin(GL_TRIANGLES);
 
