@@ -209,7 +209,8 @@ public class SenFileRenderer {
         }
 
         for (int suboOffset : suboOffsets) {
-            SuboElement.FaceInfo[] faceInfos = senFile.subo.elementByOffset(suboOffset).faceInfos;
+            SuboElement suboElement = senFile.subo.elementByOffset(suboOffset);
+            SuboElement.FaceInfo[] faceInfos = suboElement.faceInfos;
 
             for (SuboElement.FaceInfo faceInfo : faceInfos) {
                 byte[] vertexIndices = faceInfo.vertexIndices;
@@ -259,8 +260,7 @@ public class SenFileRenderer {
                 glTexCoord2f(v2tx, v2ty);
                 putAnimatedVertex(vertices[v2], animatedVertices, v2);
 
-                boolean isQuad = false;
-                if (isQuad) {
+                if (suboElement.isQuad()) {
                     glTexCoord2f(v3tx, v3ty);
                     putAnimatedVertex(vertices[v3], animatedVertices, v3);
 
@@ -390,8 +390,6 @@ public class SenFileRenderer {
             File animFile = animFiles[i];
             if (animFile.getName().equals("s_winner.anm")) {
                 animIdx = i;
-                AnimationController ctrl = new AnimationController(loadAnimation(animFile));
-                Vector3f[] res = ctrl.buildAnimatedVertices((MeshCharacter) senFile.meshes.get(29));
                 break;
             }
         }
