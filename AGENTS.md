@@ -29,4 +29,3 @@ Reverse engineering of the game Mall Maniacs. Parses and renders `.SEN`, `.TPG`,
 ## Build
 
 - Maven: `mvn -q -pl app compile`.
-- LWJGL natives on macOS: installed manually in `~/Library/Java/Extensions`.
