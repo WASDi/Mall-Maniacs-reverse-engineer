@@ -10,6 +10,7 @@ import org.lwjgl.glfw.GLFWFramebufferSizeCallback;
 import org.lwjgl.glfw.GLFWKeyCallback;
 import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
+import render.util.Utils;
 import senfile.SenFile;
 import senfile.Util;
 import senfile.factories.SenFileFactory;
@@ -181,7 +182,7 @@ public class SenFileRenderer {
     private void initMergedTpgTexture(int idx) {
         String filePath = String.format(Util.ROOT_DIR + "scene_ica/MERGED%02d.TPG", idx);
         TpgImage tpgImage = TpgImageFactory.fromFile(filePath);
-        ByteBuffer pixels = tpgImage.toByteBuffer();
+        ByteBuffer pixels = Utils.toByteBuffer(tpgImage.renderLazy());
 
         texture_MERGED[idx] = glGenTextures();
 
@@ -195,7 +196,7 @@ public class SenFileRenderer {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, TpgImage.SIZE, TpgImage.SIZE, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, TpgImage.SIZE, TpgImage.SIZE, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
     }
 
     private void renderFromSenFile(int meshIdx) {
@@ -208,8 +209,17 @@ public class SenFileRenderer {
             animatedVertices = animationController.buildAnimatedVertices(character);
         }
 
+        renderSubo(mesh, suboOffsets, vertices, animatedVertices, false);
+        renderSubo(mesh, suboOffsets, vertices, animatedVertices, true);
+    }
+
+    private void renderSubo(SenMesh mesh, int[] suboOffsets, Vertex[] vertices, Vector3f[] animatedVertices, boolean renderTransparent) {
         for (int suboOffset : suboOffsets) {
             SuboElement suboElement = senFile.subo.elementByOffset(suboOffset);
+            if (suboElement.getTransparencyMode().isTransparent != renderTransparent) {
+                continue;
+            }
+
             SuboElement.FaceInfo[] faceInfos = suboElement.faceInfos;
 
             for (SuboElement.FaceInfo faceInfo : faceInfos) {
@@ -300,8 +310,13 @@ public class SenFileRenderer {
         glClearColor(0.6f, 0.7f, 0.8f, 1.0f);
         // Enable depth testing
         glEnable(GL_DEPTH_TEST);
-//        glEnable(GL_CULL_FACE);
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_FRONT);
         glEnable(GL_TEXTURE_2D);
+
+        // Transparency
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         // Build the projection matrix. Watch out here for integer division
         // when computing the aspect ratio!
@@ -375,8 +390,8 @@ public class SenFileRenderer {
     public static void main(String[] args) throws IOException {
 //        SenFile senFile = SenFileFactory.fromFile(Util.ROOT_DIR + "scene_aqua/OBJECTS.SEN");
 //        SenFile senFile = SenFileFactory.fromFile(Util.ROOT_DIR + "scene_aqua/AQUAMALL.SEN");
-//        SenFile senFile = SenFileFactory.fromFile(Util.ROOT_DIR + "scene_ica/MALL1_ICA.SEN");
-        SenFile senFile = SenFileFactory.fromFile(Util.ROOT_DIR + "scene_ica/CHARACTERS.SEN");
+        SenFile senFile = SenFileFactory.fromFile(Util.ROOT_DIR + "scene_ica/MALL1_ICA.SEN");
+//        SenFile senFile = SenFileFactory.fromFile(Util.ROOT_DIR + "scene_ica/CHARACTERS.SEN");
 
         File animDir = new File(Util.ROOT_DIR + "anim/");
         File[] animFiles = animDir.listFiles((dir, name) -> name.toLowerCase().endsWith(".anm"));
