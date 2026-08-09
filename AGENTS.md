@@ -13,10 +13,10 @@ Reverse engineering of the game Mall Maniacs. Parses and renders `.SEN`, `.TPG`,
 - `senfile` — `.SEN` parsing: `SenFile`, `SenFileFactory`, `GameMap`, `Util`. Parts under `senfile/parts` (e.g. `Mapi`, `Subo`, `Obji`, `Cols`, `Tnam`, `Onam`, `Tani`), element records under `senfile/parts/elements`, mesh types under `senfile/parts/mesh` (`MeshObject`, `MeshCharacter`, `SenMesh`).
 - `senfile/serializer` — serializes `.SEN` back to bytes.
 - `senfile/factories` — per-section parsers.
-- `render` — LWJGL rendering of `.SEN` files.
+- `render` — mesh drawing: `SenMeshRenderer` (fixed-pipeline face drawing + texture init, shared by all renderers); LWJGL GLFW rendering of `.SEN` files.
 - `tpgviewer` — Swing viewer for `.TPG` textures.
 - `anmfile` — `.ANM` animation parsing.
-- `senviewer` — Swing viewer for `.SEN` files (GameMap + file dropdowns, `JTree` browse, `JTable` of properties). Main: `senviewer.SenViewerMain`.
+- `senviewer` — Swing viewer for `.SEN` files (GameMap + file dropdowns, `JTree` browse, `JTable` of properties, `MeshViewPanel` with an embedded OpenGL canvas via `org.lwjglx:lwjgl3-awt`). Main: `senviewer.SenViewerMain`.
 - `org/lwjglb/...` — LWJGL boilerplate.
 
 ## Conventions

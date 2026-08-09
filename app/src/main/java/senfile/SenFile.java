@@ -14,6 +14,7 @@ import java.util.List;
 public class SenFile {
 
     public final String title;
+    public final String directory;
     public final int fileSize;
     public final List<SenMesh> meshes;
     public final Mapi mapi;
@@ -24,8 +25,9 @@ public class SenFile {
     public final Onam onam;
     public final Tani tani;
 
-    public SenFile(String title, int fileSize, List<SenMesh> meshes, Mapi mapi, Subo subo, Obji obji, Cols cols, Tnam tnam, Onam onam, Tani tani) {
+    public SenFile(String title, String directory, int fileSize, List<SenMesh> meshes, Mapi mapi, Subo subo, Obji obji, Cols cols, Tnam tnam, Onam onam, Tani tani) {
         this.title = title;
+        this.directory = directory;
         this.fileSize = fileSize;
         this.meshes = meshes;
         this.mapi = mapi;

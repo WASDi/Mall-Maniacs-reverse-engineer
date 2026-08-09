@@ -53,7 +53,8 @@ public class SenFileFactory {
         buffer.flip();
         buffer.order(ByteOrder.LITTLE_ENDIAN);
 
-        SenFile senFile = parseSenFile(title, buffer);
+        String directory = filePath.substring(0, filePath.lastIndexOf('/') + 1);
+        SenFile senFile = parseSenFile(title, directory, buffer);
 
         inChannel.close();
         aFile.close();
@@ -61,7 +62,7 @@ public class SenFileFactory {
         return senFile;
     }
 
-    public static SenFile parseSenFile(String title, ByteBuffer buffer) {
+    public static SenFile parseSenFile(String title, String directory, ByteBuffer buffer) {
         int rev2Header = buffer.getInt();// REV2-header
         if (rev2Header != HeaderTexts.REV2) {
             throw new IllegalArgumentException("Expected REV2 header but found " + rev2Header);
@@ -128,7 +129,7 @@ public class SenFileFactory {
         setMeshNamesForObji(meshes, obji);
         setMeshNamesForSubo(meshes, subo);
 
-        return new SenFile(title, fileSize, meshes, mapi, subo, obji, cols, tnam, onam, tani);
+        return new SenFile(title, directory, fileSize, meshes, mapi, subo, obji, cols, tnam, onam, tani);
     }
 
     private static void setMeshNamesForObji(List<SenMesh> meshes, Obji obji) {

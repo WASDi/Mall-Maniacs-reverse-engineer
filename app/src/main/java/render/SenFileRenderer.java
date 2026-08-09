@@ -3,29 +3,20 @@ package render;
 import anmfile.AnmFile;
 import anmfile.factories.AnmFileFactory;
 import org.joml.Matrix4f;
-import org.joml.Vector3f;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWFramebufferSizeCallback;
 import org.lwjgl.glfw.GLFWKeyCallback;
 import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
-import render.util.Utils;
 import senfile.SenFile;
 import senfile.Util;
 import senfile.factories.SenFileFactory;
-import senfile.parts.elements.MapiElement;
 import senfile.parts.elements.ObjiElement;
-import senfile.parts.elements.SuboElement;
-import senfile.parts.mesh.MeshCharacter;
 import senfile.parts.mesh.SenMesh;
-import senfile.parts.mesh.Vertex;
-import tpgviewer.tpg.TpgImage;
-import tpgviewer.tpg.TpgImageFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.util.Arrays;
 import java.util.List;
@@ -52,11 +43,9 @@ public class SenFileRenderer {
     // FloatBuffer for transferring matrices to OpenGL
     private final FloatBuffer fb = BufferUtils.createFloatBuffer(16);
 
-    private static final int NUM_MERGED_TPG_FILES = 32;
-    private final int[] texture_MERGED = new int[NUM_MERGED_TPG_FILES];
-
     private final SenFile senFile;
     private final AnimationController animationController;
+    private final SenMeshRenderer meshRenderer;
     private final File[] animFiles;
     private int currentAnimIndex;
     private int meshIdx = 29;
@@ -71,6 +60,7 @@ public class SenFileRenderer {
 
         AnmFile initialAnm = animFiles.length > 0 ? loadAnimation(animFiles[currentAnimIndex]) : null;
         this.animationController = new AnimationController(initialAnm);
+        this.meshRenderer = new SenMeshRenderer(senFile, animationController);
     }
 
     private static AnmFile loadAnimation(File file) {
@@ -122,9 +112,11 @@ public class SenFileRenderer {
                     glfwSetWindowShouldClose(window, true);
                 } else if (key == GLFW_KEY_UP && action == GLFW_PRESS) {
                     debug++;
+                    meshRenderer.setDebugGroup(debug);
                     glfwSetWindowTitle(window, "debug: " + debug);
                 } else if (key == GLFW_KEY_DOWN && action == GLFW_PRESS) {
                     debug--;
+                    meshRenderer.setDebugGroup(debug);
                     glfwSetWindowTitle(window, "debug: " + debug);
                 } else if (key == GLFW_KEY_LEFT && action == GLFW_PRESS) {
                     meshIdx--;
@@ -174,135 +166,7 @@ public class SenFileRenderer {
 
         GL.createCapabilities();
 
-        for (int i = 0; i < NUM_MERGED_TPG_FILES; i++) {
-            initMergedTpgTexture(i);
-        }
-    }
-
-    private void initMergedTpgTexture(int idx) {
-        String filePath = String.format(Util.ROOT_DIR + "scene_ica/MERGED%02d.TPG", idx);
-        TpgImage tpgImage = TpgImageFactory.fromFile(filePath);
-        ByteBuffer pixels = Utils.toByteBuffer(tpgImage.renderLazy());
-
-        texture_MERGED[idx] = glGenTextures();
-
-        glBindTexture(GL_TEXTURE_2D, texture_MERGED[idx]);
-
-        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, TpgImage.SIZE, TpgImage.SIZE, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-    }
-
-    private void renderFromSenFile(int meshIdx) {
-        SenMesh mesh = senFile.meshes.get(meshIdx);
-        int[] suboOffsets = mesh.getSuboOffsets();
-        Vertex[] vertices = mesh.getVertices();
-
-        Vector3f[] animatedVertices = null;
-        if (mesh instanceof MeshCharacter character && animationController.hasAnimation()) {
-            animatedVertices = animationController.buildAnimatedVertices(character);
-        }
-
-        renderSubo(mesh, suboOffsets, vertices, animatedVertices, false);
-        renderSubo(mesh, suboOffsets, vertices, animatedVertices, true);
-    }
-
-    private void renderSubo(SenMesh mesh, int[] suboOffsets, Vertex[] vertices, Vector3f[] animatedVertices, boolean renderTransparent) {
-        for (int suboOffset : suboOffsets) {
-            SuboElement suboElement = senFile.subo.elementByOffset(suboOffset);
-            if (suboElement.getTransparencyMode().isTransparent != renderTransparent) {
-                continue;
-            }
-
-            SuboElement.FaceInfo[] faceInfos = suboElement.faceInfos;
-
-            for (SuboElement.FaceInfo faceInfo : faceInfos) {
-                byte[] vertexIndices = faceInfo.vertexIndices;
-                int v0 = vertexIndices[0] & 0xFF;
-                int v1 = vertexIndices[1] & 0xFF;
-                int v2 = vertexIndices[2] & 0xFF;
-                int v3 = vertexIndices[3] & 0xFF;
-
-                if (mesh instanceof MeshCharacter character) {
-                    int g0 = character.vertexId2Group[v0];
-                    int g1 = character.vertexId2Group[v1];
-                    int g2 = character.vertexId2Group[v2];
-                    int g3 = character.vertexId2Group[v3];
-                    if (debug < 0) {
-                        // noop
-                    } else if (!(g0 == debug || g1 == debug || g2 == debug)) {
-                        continue;
-                    }
-                }
-
-                int textureIndexForFace = faceInfo.getMapiIndex();
-                MapiElement mapiElement = senFile.mapi.elements[textureIndexForFace];
-                int mergedTpgFileIndex = mapiElement.materialIndex;
-                byte[] coords = mapiElement.textureCoordBytes;
-
-                float div = 256f;
-                // Vertex N, texture x y
-                float v0tx = (coords[0] & 0xFF) / div;
-                float v0ty = (coords[1] & 0xFF) / div;
-                float v1tx = (coords[2] & 0xFF) / div;
-                float v1ty = (coords[3] & 0xFF) / div;
-                float v2tx = (coords[4] & 0xFF) / div;
-                float v2ty = (coords[5] & 0xFF) / div;
-                float v3tx = (coords[6] & 0xFF) / div;
-                float v3ty = (coords[7] & 0xFF) / div;
-
-                glBindTexture(GL_TEXTURE_2D, texture_MERGED[mergedTpgFileIndex]);
-
-                glBegin(GL_TRIANGLES);
-
-                glTexCoord2f(v0tx, v0ty);
-                putAnimatedVertex(vertices[v0], animatedVertices, v0);
-
-                glTexCoord2f(v1tx, v1ty);
-                putAnimatedVertex(vertices[v1], animatedVertices, v1);
-
-                glTexCoord2f(v2tx, v2ty);
-                putAnimatedVertex(vertices[v2], animatedVertices, v2);
-
-                if (suboElement.isQuad()) {
-                    glTexCoord2f(v3tx, v3ty);
-                    putAnimatedVertex(vertices[v3], animatedVertices, v3);
-
-                    glTexCoord2f(v0tx, v0ty);
-                    putAnimatedVertex(vertices[v0], animatedVertices, v0);
-
-                    glTexCoord2f(v2tx, v2ty);
-                    putAnimatedVertex(vertices[v2], animatedVertices, v2);
-                }
-
-                glEnd();
-            }
-        }
-    }
-
-    private static final float SCALE = .002f;
-
-    private void putVertex(Vertex vertex) {
-        glVertex3f(vertex.x * SCALE, -vertex.y * SCALE, vertex.z * SCALE);
-    }
-
-    /**
-     * Emit a vertex, using the animated position if available, otherwise the static one.
-     * Y is negated to match the engine coordinate-system convention used in putVertex.
-     */
-    private void putAnimatedVertex(Vertex vertex, Vector3f[] animatedVertices, int vertexIdx) {
-        if (animatedVertices != null) {
-            Vector3f av = animatedVertices[vertexIdx];
-            glVertex3f(av.x * SCALE, -av.y * SCALE, av.z * SCALE);
-        } else {
-            putVertex(vertex);
-        }
+        meshRenderer.initTextures();
     }
 
     private void loop() {
@@ -311,7 +175,7 @@ public class SenFileRenderer {
         // Enable depth testing
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_CULL_FACE);
-        glCullFace(GL_FRONT);
+        glCullFace(GL_BACK);
         glEnable(GL_TEXTURE_2D);
 
         // Transparency
@@ -365,7 +229,7 @@ public class SenFileRenderer {
         modelMatrix.translation(0, 0, 0)
                 .rotateY(angle * (float) Math.toRadians(90));
         glLoadMatrixf(viewMatrix.mul(modelMatrix, modelViewMatrix).get(fb));
-        renderFromSenFile(meshIdx);
+        meshRenderer.drawMesh(senFile.meshes.get(meshIdx));
     }
 
     private void renderMany(float angle) {
@@ -378,12 +242,12 @@ public class SenFileRenderer {
 
             ObjiElement obji = senFile.obji.elements[meshIdx];
             modelMatrix.translation(
-                    SCALE * obji.x,
+                    SenMeshRenderer.SCALE * obji.x,
                     i * .3f,
-                    SCALE * obji.z
+                    SenMeshRenderer.SCALE * obji.z
             ).rotateY(angle * (float) Math.toRadians(90));
             glLoadMatrixf(viewMatrix.mul(modelMatrix, modelViewMatrix).get(fb));
-            renderFromSenFile(i);
+            meshRenderer.drawMesh(meshes.get(i));
         }
     }
 

@@ -51,6 +51,17 @@
         </dependency>
 
         <dependency>
+            <groupId>org.lwjglx</groupId>
+            <artifactId>lwjgl3-awt</artifactId>
+            <version>0.2.4</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.lwjgl</groupId>
+            <artifactId>lwjgl-jawt</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>org.joml</groupId>
             <artifactId>joml</artifactId>
             <version>${joml.version}</version>
