@@ -18,6 +18,7 @@ import senfile.parts.mesh.SenMesh;
 import java.io.File;
 import java.io.IOException;
 import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
 import java.util.Arrays;
 import java.util.List;
 
@@ -103,6 +104,13 @@ public class SenFileRenderer {
         window = glfwCreateWindow(width, height, "Hello World!", NULL, NULL);
         if (window == NULL)
             throw new RuntimeException("Failed to create the GLFW window");
+
+        // Fixes having to briefly resize the window before getting correct render
+        IntBuffer fbWidth = BufferUtils.createIntBuffer(1);
+        IntBuffer fbHeight = BufferUtils.createIntBuffer(1);
+        glfwGetFramebufferSize(window, fbWidth, fbHeight);
+        width = fbWidth.get(0);
+        height = fbHeight.get(0);
 
         glfwSetKeyCallback(window, keyCallback = new GLFWKeyCallback() {
             @Override
