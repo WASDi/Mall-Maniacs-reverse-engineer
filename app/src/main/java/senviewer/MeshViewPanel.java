@@ -1,15 +1,19 @@
 package senviewer;
 
+import anmfile.AnmFile;
 import org.joml.Matrix4f;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.awt.AWTGLCanvas;
 import org.lwjgl.opengl.awt.GLData;
+import render.AnimationController;
 import render.SenMeshRenderer;
 import senfile.SenFile;
 import senfile.parts.mesh.SenMesh;
 
+import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JSlider;
 import javax.swing.Timer;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -43,10 +47,13 @@ public class MeshViewPanel extends JPanel {
     private final AWTGLCanvas canvas;
     private final FloatBuffer matrixBuffer = BufferUtils.createFloatBuffer(16);
 
+    private final AnimationController animationController = new AnimationController(null);
     private SenMeshRenderer meshRenderer;
     private SenMeshRenderer lastInitializedRenderer;
     private SenMesh currentMesh;
     private float rotationAngle;
+    private float animationRuntime;
+    private float zoom = 1.0f;
 
     public MeshViewPanel() {
         super(new BorderLayout());
@@ -72,8 +79,22 @@ public class MeshViewPanel extends JPanel {
         };
         add(canvas, BorderLayout.CENTER);
 
+        JSlider zoomSlider = new JSlider(20, 200, 100);
+        zoomSlider.addChangeListener(e -> {
+            zoom = zoomSlider.getValue() / 100.0f;
+            if (canvas.isDisplayable() && canvas.isShowing()) {
+                canvas.render();
+            }
+        });
+
+        JPanel zoomPanel = new JPanel(new BorderLayout());
+        zoomPanel.add(new JLabel("Zoom:"), BorderLayout.WEST);
+        zoomPanel.add(zoomSlider, BorderLayout.CENTER);
+        add(zoomPanel, BorderLayout.SOUTH);
+
         new Timer(33, e -> {
             rotationAngle += 0.03f;
+            animationRuntime += 0.033f;
             if (meshRenderer != null && canvas.isDisplayable() && canvas.isShowing()) {
                 try {
                     canvas.render();
@@ -85,9 +106,15 @@ public class MeshViewPanel extends JPanel {
     }
 
     public void setSenFile(SenFile senFile) {
-        this.meshRenderer = senFile == null ? null : new SenMeshRenderer(senFile, null);
+        this.meshRenderer = senFile == null ? null : new SenMeshRenderer(senFile, animationController);
         this.currentMesh = null;
         this.rotationAngle = 0;
+        this.animationRuntime = 0;
+    }
+
+    public void setAnimation(AnmFile anmFile) {
+        animationController.switchAnimation(anmFile);
+        this.animationRuntime = 0;
     }
 
     public void showMesh(SenMesh mesh) {
@@ -125,7 +152,10 @@ public class MeshViewPanel extends JPanel {
         }
 
         Matrix4f proj = new Matrix4f().setPerspective((float) Math.toRadians(40), (float) width / height, 0.01f, 100.0f);
-        Matrix4f view = new Matrix4f().setLookAt(0f, 5f, 15f, 0f, 0f, 0f, 0f, 1f, 0f);
+        Matrix4f view = new Matrix4f().setLookAt(
+                0f * zoom, 5f * zoom, 15f * zoom,
+                0f, 0f, 0f,
+                0f, 1f, 0f);
         Matrix4f model = new Matrix4f().translation(0, 0, 0).rotateY(rotationAngle);
 
         glMatrixMode(GL_PROJECTION);
@@ -134,6 +164,7 @@ public class MeshViewPanel extends JPanel {
         glMatrixMode(GL_MODELVIEW);
         glLoadMatrixf(view.mul(model, new Matrix4f()).get(matrixBuffer));
 
+        animationController.update(animationRuntime);
         meshRenderer.drawMesh(currentMesh);
         canvas.swapBuffers();
     }

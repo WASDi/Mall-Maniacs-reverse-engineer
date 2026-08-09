@@ -1,9 +1,32 @@
 package senviewer;
 
+import anmfile.AnmFile;
+import anmfile.factories.AnmFileFactory;
 import senfile.GameMap;
 import senfile.SenFile;
+import senfile.Util;
 import senfile.factories.SenFileFactory;
 import senfile.parts.mesh.SenMesh;
+
+import javax.swing.JComboBox;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import javax.swing.JTable;
+import javax.swing.JTree;
+import javax.swing.SwingUtilities;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreePath;
+import java.awt.BorderLayout;
+import java.awt.FlowLayout;
+import java.io.File;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
@@ -27,6 +50,7 @@ public class SenViewerMain {
     private final JFrame frame;
     private final JComboBox<GameMap> mapCombo;
     private final JComboBox<SenFileChoice> fileCombo;
+    private final JComboBox<AnmChoice> animCombo;
     private final JTree tree;
     private final PropertyTableModel tableModel;
     private final MeshViewPanel meshViewPanel;
@@ -46,11 +70,15 @@ public class SenViewerMain {
         fileCombo = new JComboBox<>();
         fileCombo.addActionListener(e -> loadSelectedFile());
 
+        animCombo = new JComboBox<>();
+
         JPanel selectorPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         selectorPanel.add(new JLabel("GameMap:"));
         selectorPanel.add(mapCombo);
         selectorPanel.add(new JLabel("SEN-file:"));
         selectorPanel.add(fileCombo);
+        selectorPanel.add(new JLabel("Anim:"));
+        selectorPanel.add(animCombo);
 
         tree = new JTree(new DefaultMutableTreeNode("No file loaded"));
         tree.setRootVisible(true);
@@ -96,6 +124,7 @@ public class SenViewerMain {
         frame.setLocationRelativeTo(null);
 
         populateFileCombo((GameMap) mapCombo.getSelectedItem());
+        populateAnimCombo();
         frame.setVisible(true);
     }
 
@@ -146,6 +175,36 @@ public class SenViewerMain {
         }
     }
 
+    private void populateAnimCombo() {
+        animCombo.addItem(new AnmChoice(null));
+        File animDir = new File(Util.ROOT_DIR + "anim/");
+        File[] animFiles = animDir.listFiles((dir, name) -> name.toLowerCase().endsWith(".anm"));
+        if (animFiles != null) {
+            Arrays.sort(animFiles);
+            for (File file : animFiles) {
+                animCombo.addItem(new AnmChoice(file.getAbsolutePath()));
+            }
+        }
+        animCombo.addActionListener(e -> applySelectedAnimation());
+    }
+
+    private void applySelectedAnimation() {
+        AnmChoice choice = (AnmChoice) animCombo.getSelectedItem();
+        AnmFile anmFile = null;
+        if (choice != null && choice.path() != null) {
+            try {
+                anmFile = AnmFileFactory.fromFile(choice.path());
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(frame,
+                        "Failed to load " + choice.path() + ":\n" + ex.getMessage(),
+                        "Load error",
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+        }
+        meshViewPanel.setAnimation(anmFile);
+    }
+
     private void expandChildrenOfRoot(DefaultTreeModel model) {
         Object root = model.getRoot();
         for (int i = 0; i < model.getChildCount(root); i++) {
@@ -157,6 +216,13 @@ public class SenViewerMain {
         @Override
         public String toString() {
             return path.substring(path.lastIndexOf('/') + 1);
+        }
+    }
+
+    private record AnmChoice(String path) {
+        @Override
+        public String toString() {
+            return path == null ? "None" : path.substring(path.lastIndexOf('/') + 1);
         }
     }
 }
